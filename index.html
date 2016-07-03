@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>reactr</title>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="css/tachyons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="libs/jquery.js"></script>
+  <script src="libs/lodash.js"></script>
+  <script src="libs/react.js"></script>
+  <script src="libs/react-dom.js"></script>
+  <script src="libs/babel.min.js"></script>
+  <script src="libs/polyfill.min.js"></script>
+  <script src="libs/browser.min.js"></script>
+  <script src="libs/ace.js"></script>
+</head><body>
+
+<div id="root"></div>
+
+<script id="data" type="text/babel">
+
+window['data'] = {
+  name: "Nicolas Martinet",
+  contact: [
+    {name: "email",  val: "nicolas.martinet@gmail.com"},
+    {name: "telephone", val: "123-456-7890"},
+    {name: "website", val: "nmartinet.github.io"}
+  ],
+};
+
+window['components'] = {
+  ReactrRoot: `{
+    init: function(){
+      var self = this;
+      let {data, components} = self.props;
+
+      data.q.registerCallback('onChange', function(data){
+        self.setState({data: data});
+      });
+
+      components.q.registerCallback('onChange', function(data){
+        self.setState({components: data});
+      });
+
+      return {
+        data: data.data,
+        q: data.q,
+        components: components.data,
+        componentsQ: components.q
+      };
+    },
+    getInitialState: function(){
+      return this.init();
+    },
+    render: function(){
+      let {data, q, components, componentsQ} = this.state;
+      let {ctrls} = this.props;
+      let root = this;
+
+      return (
+        <div className="cf">
+          <div className="fl w-100 pa3">
+            <h1 className="f1 tracked tr fw1 bb bw1 b--silver fw1">reactr</h1>
+            <ReactrControls  ctrls={ctrls} />
+            <Tabs selected="1">
+              <div label="Data">
+                <DataEdit data={data} q={q} path={[]}/>
+              </div>
+
+              <div label="Components">
+                <ComponentEditor components={components} q={componentsQ} ctrls={ctrls} root={root}/>
+              </div>
+            </Tabs>
+            
+          </div>
+        </div>
+      )
+    }
+  }`,
+  Scratch: `{
+    render: function(){
+      return (
+        <div>
+          scratch
+          <ToggleMenu>
+            <ul>
+              <li>1</li>
+              <li>1</li>
+              <li>1</li>
+              <li>1</li>
+            </ul>
+          </ToggleMenu>
+        </div>
+      )
+    }
+  }`,
+  ToggleMenu: `{
+    toggleVisibility: function(){
+      var visible = this.state.visible;
+
+      if (visible) {
+        window.removeEventListener('click', this.onClick);
+      } else {
+        window.addEventListener('click', this.onClick);
+      };
+
+      this.setState({visible: !visible}) 
+    },
+    onClick: function(evnt){ 
+      //http://stackoverflow.com/questions/32553158/detect-click-outside-react-component
+      var thisNode = ReactDOM.findDOMNode(this)
+      if( !thisNode.contains(evnt.target) )
+        this.toggleVisibility();
+      
+    },
+    getInitialState: () => ( {visible: false} ),
+    changeSelectedComponentName: function (e) {
+      //this.props.editor.selectedComponent.name = $(e.target).val();
+      console.log(1)
+        this.setState({visible: false})
+    },
+    render: function(){
+      let cnames = cn(
+        'relative',
+        (this.state.visible ? '' : 'no-display')
+      );
+
+
+      return (
+        <div>
+          <a onClick={this.toggleVisibility}> 
+            ...
+          </a>
+          <div className={cn(cnames, '')}on>
+
+            {this.props.children}
+          </div>
+        </div>
+      )
+    }
+  }`,
+  ComponentEditor: `{
+    updateCurrentComponent: function(){
+      let {selected, buffer} = this.state;
+      let val = this.editor.getValue();
+      this.props.ctrls.registerComponent(val, selected );
+      this.props.root.forceUpdate();
+      this.props.q.updateValue([selected], this.editor.getValue());
+
+    },
+    onComponentChange: function(key){
+      if(this.props.components[this.state.selected] != this.editor.getValue()) {
+        var buffer = this.state.buffer;
+        buffer[this.state.selected] = this.editor.getValue();
+        this.setState({buffer: buffer});
+      };
+
+      this.setState({selected: key});
+      this.updateEditorValue(key);
+    },
+    updateEditorValue: function(key){
+      var value;
+      if(_.has(this.state.buffer, key)){
+        value =this.state.buffer[key]; 
+      } else {
+        value = this.props.components[key]
+      }
+       this.editor.setValue(value);
+    },
+    componentDidMount: function(){
+      this.editor = ace.edit('editor');
+      this.editor.setTheme("ace/theme/clouds");
+      this.editor.getSession().setMode("ace/mode/javascript");
+      this.editor.setShowPrintMargin(false);
+      this.editor.setOptions({minLines: 25});
+      this.editor.setOptions({maxLines: 50});
+      this.editor.setValue(this.props.components[this.state.selected]);
+    },
+    getInitialState: function(){
+      return {
+        selected: _.keys(this.props.components)[0],
+        buffer: {},
+      }
+    },
+    render: function(){
+      var self = this;
+      let {components} = self.props;
+      let buffer = self.state.buffer;
+
+      var compList = _.map(components, function(comp, key){
+        return (
+          <div key={key}>
+            {key}
+          </div>
+        )
+      })
+
+      return (
+        <div className="cf">
+          <div className="fl w-25">
+            <ComponentList components={components} buffer={buffer} onClick={this.onComponentChange} />
+          </div>
+          
+          <div className="fl w-75 pl3 pt3">
+            <ComponentEditorFileControls updateComponent={self.updateCurrentComponent}  />
+            
+            <div id="editor">
+            </div>
+          
+          </div>
+
+          
+        </div>
+      )
+    },
+  }`,
+  ComponentEditorFileControls: `{
+    onApply: function(){
+      this.props.updateComponent();
+    },
+    render: function(){
+      let self = this;
+      let itmClass = "f6 f5-ns b db pa2 link dim dark-gray ba b--black-20";
+
+      return (
+        <ul className="list ma0 pl0 pb2">
+          <li className="dib mb1 mr1">
+            <a href="#" className={itmClass} onClick={self.onApply}>Apply</a>
+          </li>
+        </ul>
+      )
+    },
+  }`,
+  ComponentList: `{
+    onClick: function(key, evnt){
+      evnt.preventDefault();
+      this.props.onClick(key);
+    },
+    render: function(){
+      var self = this;
+      let {components, buffer} = self.props;
+
+      var compList = _.map(components, function(comp, key){
+        let modIndic = _.has(buffer, key) ? '\u2022' : "";
+        return (
+          <li className="ph3 pv3 bb b--light-silver" key={key} onClick={self.onClick.bind(self, key)}>{key} { modIndic } </li>
+        )
+      })
+
+      return (
+        <ul className="list pl0 ml0 center mw6 ba b--light-silver br2">
+          {compList}
+        </ul>
+      );
+    }
+  }`,
+  ReactrControls: `{
+    onSave: function(e){
+      this.props.ctrls.saveToFile();
+    },
+    render: function(){
+      return (
+        <div className="cf">
+          <div className="fr">
+            <button className="btn" onClick={this.onSave} >
+              Save
+            </button>
+          </div>
+        </div>
+      )
+    }
+  }`,
+  Tabs: `{
+    getInitialState: function(){
+      return {
+        selected: this.props.selected || 0
+      };
+    },
+    onClick: function(indx, evnt){
+      evnt.preventDefault();
+      this.setState({selected: indx})
+
+    },
+    render: function(){
+      var self = this;
+
+      var tabList = _.map(self.props.children, function(child, index){
+        var  cNames = "link dim black f1 dib mr5";
+        if (index == self.state.selected)
+          cNames += " bb bw2 b--silver "
+
+        return (
+          <a className={cNames} key={index} href="#" onClick={self.onClick.bind(self, index)}>
+            {child.props.label}
+          </a>
+        )
+      })
+      var content = self.props.children[self.state.selected];
+
+      return (
+        <div className="nowrap overflow-x-auto">
+          <div className="bb bw1 b--silver mb2">
+            {tabList}
+          </div>
+          <div className="pa3 pt1">
+            {content}
+          </div>
+          
+        </div>
+      )
+    }
+  }`,
+  DataEdit: `{
+    render: function(){
+      var self = this;
+      let {data, q, path} = self.props;
+
+      var Editor = React.createElement(window[q.getType(path) + "Editor"], {data: data, q: q, path: path });
+      
+      return (
+        <div className="cf w100">
+            {Editor}
+        </div>
+      )
+    }
+  }`,
+  ObjectEditor: `{
+    addArray: function(path, evnt){
+      console.log(path)
+      this.props.q.addArray(path);
+    },
+    render: function(){
+      var self = this;
+      let {data, q, path} = self.props;
+
+      var keyVal = _.map(data, function(val, key){
+        var _path = path.concat(key)
+        var keyCtrls;
+
+        var type = self.props.q.getType(_path);
+
+        if(type ==="Array"){
+          keyCtrls = (
+            <div className="fr f7 gray dim pr3">
+              <a className="" href="#" onClick={self.addArray.bind(self, _path)} >
+                Add
+              </a>
+            </div>
+          )
+        };
+
+        return (
+          <div key={key} className="cf">
+            <div className="cf w-100">
+              <div className="fl w-25">
+                <KeyEdit data={key} q={q} path={_path} />   
+                {keyCtrls}           
+              </div>
+              <div className="fr w-75">
+                <DataEdit data={val} q={q} path={_path} />
+              </div>
+            </div>
+          </div>
+        );
+      });
+
+      var breadCrumb = _.reduce(path, function(acc, val){
+          return acc + "/" + val
+        }, "root");
+
+      return (
+        <div className="w-100">
+          {keyVal}
+          <TextInput val="" placeholder="new key" />
+        </div>
+      );
+    },
+  }`,
+  TextInput: `{
+    onChange: function(e){
+      this.setState({val: e.target.value});
+      if(e.target.value === this.props.data){
+        this.setState({mod: false});
+      } else {
+        this.setState({mod: true});
+      }
+    },
+    onSave: function(e){
+      this.props.q.addKey(this.props.path, this.state.val);
+      this.setState({val: "", mod:false});
+    },
+    getInitialState: function(){
+      return {
+        val: this.props.val || "",
+        mod: false,
+      };
+    },
+    render: function(){
+      var SaveControls = null;
+      if (this.state.mod) {
+        SaveControls = (
+          <div className="fl dib absolute f8">
+          <div className="menu">
+            ...
+            <ul>
+            <li>delete</li>
+            </ul>
+          </div>
+
+           | 
+          <a className="" href="#" onClick={this.onSave}>save</a>
+          </div>
+        )
+      } else {
+        SaveControls = (
+          <div className="fl dib absolute f8">...</div>
+        )
+      }
+      return(
+        <div className="cf mr3 relative w-25 pr3">
+          <div className="w-100 fr dib">
+            <input className="inpt w-100  tr" type="text" value={this.state.val} onChange={this.onChange} placeholder={this.props.placeholder}/>
+          </div>
+          
+          {SaveControls}
+        </div>
+      )
+    },
+  }`,
+  KeyEdit: `{
+    onChange: function(e){
+      this.setState({val: e.target.value});
+      if(e.target.value == this.props.data){
+        this.setState({mod: false});
+      } else {
+        this.setState({mod: true});
+      }
+    },
+    onSave: function(e){
+      console.log('onSave');
+    },
+    getInitialState: function(){
+      return {
+        val: this.props.data || "",
+        mod: false,
+      };
+    },
+    render: function(){
+      var menu = (
+        <ToggleMenu>
+          <ul className="list pl0 ml0 center mw5 ba b--light-silver br3 bg-light-gray">
+            <li className="ph3 pv2 bb b--light-silver">1</li>
+            <li className="ph3 pv2 bb b--light-silver">1</li>
+            <li className="ph3 pv2 bb b--light-silver">1</li>
+            <li className="ph3 pv2 bb b--light-silver">1</li>
+            <li className="ph3 pv2 bb b--light-silver">1</li>
+          </ul>
+        </ToggleMenu>
+      )
+
+      var SaveControls = null;
+      if (this.state.mod) {
+        SaveControls = (
+          <div className="fl dib absolute f8">... | save</div>
+        )
+      } else {
+        SaveControls = (
+          <div className="fl dib absolute f8">...</div>
+        )
+      }
+
+      return (
+        <div className="cf mr3 relative z-0">
+          <div className="w-100 fr dib">
+            <input className="inpt w-100  tr" type="text" value={this.state.val} onChange={this.onChange} placeholder={this.props.data}/>
+          </div>
+          
+          {menu}
+        </div>
+      )
+    },
+  }`,
+  ArrayEditor: `{
+    render: function(){
+      var self = this;
+      let {data, q, path} = self.props;
+
+      var getRowClass = function(index){
+        if(index%2==0){
+          return {
+            row: "bg-black-10",
+            num: "black-10"
+          }
+        }else{
+          return {
+            row: "bg-black-20",
+            num: "black-10"
+          }
+        }
+      }
+
+      var itmList = _.map(data, function(val, index){
+        var _path = path.concat(index);
+        let {row, num} = getRowClass(index);
+
+        return (
+          <div className="cf w-100 relative" key={index}>
+            <div className={"fl absolute w-auto f1 fw1 b ma1 " + num}>
+              {index}
+            </div>
+            <div className={"fl w-100 pa1 " + row}>
+              <DataEdit data={val} q={q} path={_path} />
+            </div>
+          </div>
+        )
+      });
+
+      return (
+        <div className="ma1 ba bw1 b--silver">
+          {itmList}
+        </div>
+      )
+
+    },
+  }`,
+  ValueEditor:  `{
+    onChange: function(e){
+      this.setState({val: e.target.value})
+      this.props.q.updateValue(this.props.path, e.target.value)
+    },
+    getInitialState: function(){
+      return {
+        val: this.props.data || ""
+      }
+    },
+    render: function(){
+      var types = _.keys(this.props.q.getTypes());
+      return (
+        <div className="cf w-100">
+          <div className="fl w-100">
+            <input className="w-100 inpt" type="text" value={this.state.val} onChange={this.onChange} />
+          </div>
+        </div>
+      )
+    }
+  }`,
+  Dropdown: `{
+    onChange: function(e){
+      this.setState({value: e.target.value});
+      this.props.onChange(e.target.value);
+    },
+    getInitialState: function(){
+      return {
+        value: this.props.value || null
+      }
+    },
+    render: function(){
+      var options = _.map(this.props.options, function(o, i){
+        return (
+          <option key={i} value={o}>{o}</option>
+        )
+      });
+
+      return (
+        <select className="inpt" onChange={this.onChange} value={this.state.value}>
+          {options}
+        </select>
+      )
+    },
+  }`,
+  CV: `{
+    render: function(){
+      let {data} = this.props;
+      return (
+        <div className="mw9 center pa3 ph5-ns">
+          <CVHeader name={data.name}/>
+          <div className="cf">
+            <ContactBox contactInfo={data.contact} />
+          </div>
+        </div>
+      ); //end return
+    },
+  }`,
+  CVHeader: `{
+    render: function() {
+      let {name} = this.props;
+
+      return (
+        <div className="bb bw2 mb5" >
+          <h1 className="f-5 fw1 tracked tr mb2">{name}</h1>
+        </div>
+      );
+
+    }
+  }`,
+  ContactBox: `{
+    render: function() {
+      let {contactInfo} = this.props;
+
+      var boxContent = contactInfo.map(function(info){
+        return (
+          <li key={info.name} className="cf f3 pb3">
+            <div className="fl">{info.name}</div>
+            <div className="fr">{info.val}</div>
+          </li>  
+        );
+      })
+
+      return (
+        <div className="w-5 bg-light-gray fr pa3">
+          <span className="f1 bb bw1">Contact Information</span>
+          <ul className="list pa0">
+            {boxContent}
+          </ul>
+        </div>
+      )
+
+    }
+  }`,
+};
+
+window['config'] = {
+  elem: 'root',
+  data: 'data',
+  components: 'components',
+}
+
+</script>
+
+
+<script id="reactr" type="text/babel">
+  var cn = function(){
+    return _.chain(arguments)
+            .flattenDeep()
+            .map(function(d){
+              if(typeof(d) == 'object')
+                return _.map(d, function(v, k){
+                  return v ? k : '';
+                })
+              return d;
+            })
+            .flattenDeep()
+            .reduce(function(d, a){
+              return d + " " + a;
+            })
+            .value()
+  }
+
+  var ils = function(){
+    return arguments
+  }
+
+  var Container = function(data){
+    var self = this;
+    var data = data;
+    var functions = {};
+    var callbacks = {
+      'onChange': [],
+    };
+
+    var types = {
+      'Object': {},
+      'Array': [],
+      'Value': '',
+    }
+
+    var registerCallback = function(evnt, cb){
+      if(!_.has(callbacks, evnt)) callbacks[evnt] = [];
+      callbacks[evnt].push(cb);    
+    };
+
+    var trigger = function(evnt, arg){
+      var _arg = arg;
+      if(_.has(callbacks, evnt))
+        _.forEach(callbacks[evnt], function(cb){
+          cb(_arg);
+        })
+    };
+
+    var doOn = function(path, cb){
+      var _doOn = function(data, path, cb){
+        if(path.length == 0) return cb(data);
+        var _path = path.slice();
+        var key = _path.shift();
+        data[key] = _doOn(data[key], _path, cb);
+
+        return data
+      }
+      data = _doOn(data, path, cb);
+      trigger('onChange', data)
+    };
+
+    var readOn = function(path){
+      var _readOn = function(data, path){
+        if(path.length == 0) return data;
+        var _path = path.slice();
+        var key = _path.shift();
+        return _readOn(data[key], _path); 
+      };
+
+      return _readOn(data, path);
+    };
+
+    var getType = function(path){
+      var _getType = function(v){
+        if ((typeof(v) === 'object') && !Array.isArray(v)) return 'Object';
+        if (Array.isArray(v)) return 'Array';
+        return 'Value';
+      }
+
+      return _getType(readOn(path))
+    };
+
+    var updateValue = function(path, value){
+      var value = value;
+      doOn(path, function(d){
+        return value;
+      });
+    };
+
+    var addKey = function(path, key){
+      var value = types['Object'];
+      var key = key
+      doOn(path, function(d){
+        return _.extend(d, {[key.toString()]: value});
+      })
+    }
+
+    var addArray = function(path){
+      doOn(path, function(d){
+        d.push("")
+        return d;
+      })
+    }
+
+
+
+    var getTypes = function(){
+      return types
+    }
+   
+
+    var init = function(){
+
+    };
+
+    functions = {
+      doOn: doOn,
+      readOn: readOn,
+      updateValue: updateValue,
+      registerCallback: registerCallback,
+      getType: getType,
+      getTypes: getTypes,
+      addKey: addKey,
+      addArray: addArray,
+    }
+
+    init();
+
+    return {
+      data: data,
+      q: functions,
+    }
+  };
+
+
+
+  var Reactr = function(config){
+    var self        = this;
+    var config      = window[config];
+    var data        = {};
+    var components  = {};
+    var ctrls       = {};
+
+    var promtForSave = function(content){
+      var el = document.createElement('a');
+      el.setAttribute('href', 
+                      'data:text/plain;charset=utf-8,' 
+                      + encodeURIComponent(content));
+      
+      el.setAttribute('download', 'index.html');
+      el.style.display = 'none';
+
+      document.body.appendChild(el);
+      el.click();
+      document.body.removeChild(el);
+    };
+
+    var getReactrCode = function(){
+
+      return $('html').find('#reactr').html();
+    }
+
+    var generateFile = function(content){
+      //defaults
+      let {
+        title       = 'reactr',
+        meta        = `<meta charset="utf-8" />`,
+        stylesheets = [],
+        scripts     = [],
+        datasets    = [], 
+      } = content;
+
+      let reactorCode = `<script id="reactr" type="text/babel">` + getReactrCode() + "</" + "script>";
+
+      let cssImports = _(stylesheets)
+                          .map((ss) => `<link rel="stylesheet" href="${ss}">`)
+                          .reduce((x, a) => `${x} \n        ${a}`);
+
+      //split closing tag - browser would interpret it as the closing tag of the 
+      //current scirpt instead of a template
+      let scriptImports = _(scripts)
+                            .map((sf) => `<script src="${sf}">` + "</" + "script>")
+                            .reduce((x, a) => `${x} \n        ${a}`);
+
+
+      let dsString = function(dataset){
+        let content = `window['${dataset.name}'] = ${JSON.stringify(dataset.data)} ;`;
+        return `<script id="${dataset.name}" type="text/babel">` + content + "</" + "script>"
+      };
+      let inlineData = _(datasets).map(dsString).reduce( (d, a) => `${d} \n ${a}` )                          
+
+      let fileContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${title}</title>
+          ${meta}
+          ${cssImports}
+          ${scriptImports}
+        </head>
+        <body>
+          <div id="root"></div>
+          ${inlineData}
+          ${reactrCode}
+        </body>
+        </html>
+      `
+
+      return  fileContent
+    }
+
+    var saveToFile = function(){
+      let fileContent = {
+        title:        "reactr",
+        stylesheets:  ["css/tachyons.min.css",  
+                       "css/style.css", 
+                      ],
+        scripts:      [ "libs/jquery.js",
+                        "libs/lodash.js",
+                        "libs/react.js",
+                        "libs/react-dom.js",
+                        "libs/babel.min.js",
+                        "libs/polyfill.min.js",
+                        "libs/browser.min.js",
+                        "libs/ace.js",
+                      ],
+        datasets:     [{name: 'config',     data: config},
+                       {name: 'data',       data: data.data},
+                       {name: 'components', data:components.data },
+                      ],
+      }
+
+
+      promtForSave(generateFile(fileContent))
+    };
+
+
+    var registerComponent = function(component, name){
+      var presets = { presets: ['es2015', 'react'] };
+      var compCode = "window['" + name + "'] = React.createClass(" + component + ")";
+      compCode = Babel.transform(compCode, presets).code;
+
+      eval(compCode)
+    }
+
+    var registerComponents = function(components){
+      _.forEach(components, registerComponent);
+    }; 
+
+    var init = function(){
+      registerComponents( window[config.components] )
+      data = Container(window[config.data]);
+      components = Container(window[config.components])
+    };
+
+    init();
+
+    ctrls = {
+      registerComponent: registerComponent,
+      saveToFile: saveToFile
+    }
+
+    var run = function(){
+      const rootElement = document.getElementById(config.elem)
+      ReactDOM.render(
+        <ReactrRoot data={data} components={components} ctrls={ctrls} />,
+        rootElement
+      );
+    };
+
+    return {
+      run: run,
+    }
+
+  }
+
+  var reactr = Reactr('config');
+
+  reactr.run();
+
+</script>
+
+
+
+
+</body></html>
