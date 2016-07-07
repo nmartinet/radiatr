@@ -62,7 +62,7 @@ window['components'] = {
           <div className="fl w-100 pa3">
             <h1 className="f1 tracked tr fw1 bb bw1 b--silver fw1">reactr</h1>
             <ReactrControls  ctrls={ctrls} />
-            <Tabs selected="1">
+            <Tabs selected="0">
               <div label="Data">
                 <DataEdit data={data} q={q} path={[]}/>
               </div>
@@ -132,7 +132,6 @@ window['components'] = {
             ...
           </a>
           <div className={cn(cnames, '')}on>
-
             {this.props.children}
           </div>
         </div>
@@ -329,32 +328,44 @@ window['components'] = {
       console.log(path)
       this.props.q.addArray(path);
     },
+    modKey: function(path, newVal, evnt){
+      console.log('modKey')
+      return newVal
+    }, 
+    addKey: function(path, newVal, evnt){
+      console.log('addkey')
+      return "";
+    },
     render: function(){
       var self = this;
       let {data, q, path} = self.props;
+      let opts = [
+        'add',
+        'delete',
+        'change type',
+        'duplicate to new key',
+      ];
+
+      let optsUI = _.map(opts, (opt) => <li className="ph3 pv2 bb b--light-silver">{opt}</li>)
+
+      let optsMenu =  (<ul className="relative z-top list pl0 ml0 center mw5 ba b--light-silver br3 bg-light-gray">
+            {optsUI}
+          </ul>)
 
       var keyVal = _.map(data, function(val, key){
         var _path = path.concat(key)
-        var keyCtrls;
 
         var type = self.props.q.getType(_path);
-
-        if(type ==="Array"){
-          keyCtrls = (
-            <div className="fr f7 gray dim pr3">
-              <a className="" href="#" onClick={self.addArray.bind(self, _path)} >
-                Add
-              </a>
-            </div>
-          )
-        };
 
         return (
           <div key={key} className="cf">
             <div className="cf w-100">
               <div className="fl w-25">
-                <KeyEdit data={key} q={q} path={_path} />   
-                {keyCtrls}           
+                <TextInput val={key} 
+                           placeholder={key} 
+                           onSave={self.modKey}
+                           ctrls={optsMenu}
+                           path={_path} />        
               </div>
               <div className="fr w-75">
                 <DataEdit data={val} q={q} path={_path} />
@@ -364,14 +375,12 @@ window['components'] = {
         );
       });
 
-      var breadCrumb = _.reduce(path, function(acc, val){
-          return acc + "/" + val
-        }, "root");
-
       return (
         <div className="w-100">
           {keyVal}
-          <TextInput val="" placeholder="new key" />
+          <div className="w-25">
+            <TextInput val="" placeholder="new key" onSave={this.addKey} ctrls={optsMenu} path={path}/>
+          </div>
         </div>
       );
     },
@@ -386,8 +395,9 @@ window['components'] = {
       }
     },
     onSave: function(e){
-      this.props.q.addKey(this.props.path, this.state.val);
-      this.setState({val: "", mod:false});
+      console.log('onsave')
+      let newVal = this.props.onSave(this.props.path, this.state.val);
+      this.setState({val: newVal, mod:false});
     },
     getInitialState: function(){
       return {
@@ -396,86 +406,30 @@ window['components'] = {
       };
     },
     render: function(){
-      var SaveControls = null;
-      if (this.state.mod) {
-        SaveControls = (
-          <div className="fl dib absolute f8">
-          <div className="menu">
-            ...
-            <ul>
-            <li>delete</li>
-            </ul>
-          </div>
-
-           | 
-          <a className="" href="#" onClick={this.onSave}>save</a>
-          </div>
+      var saveCtrls;
+      if (this.state.mod && !(this.state.val === "")) {
+        saveCtrls = (
+          <a className="fl dib" onClick={this.onSave}>
+            save
+          </a>
         )
-      } else {
-        SaveControls = (
-          <div className="fl dib absolute f8">...</div>
-        )
-      }
-      return(
-        <div className="cf mr3 relative w-25 pr3">
-          <div className="w-100 fr dib">
-            <input className="inpt w-100  tr" type="text" value={this.state.val} onChange={this.onChange} placeholder={this.props.placeholder}/>
-          </div>
-          
-          {SaveControls}
-        </div>
-      )
-    },
-  }`,
-  KeyEdit: `{
-    onChange: function(e){
-      this.setState({val: e.target.value});
-      if(e.target.value == this.props.data){
-        this.setState({mod: false});
-      } else {
-        this.setState({mod: true});
-      }
-    },
-    onSave: function(e){
-      console.log('onSave');
-    },
-    getInitialState: function(){
-      return {
-        val: this.props.data || "",
-        mod: false,
       };
-    },
-    render: function(){
-      var menu = (
-        <ToggleMenu>
-          <ul className="list pl0 ml0 center mw5 ba b--light-silver br3 bg-light-gray">
-            <li className="ph3 pv2 bb b--light-silver">1</li>
-            <li className="ph3 pv2 bb b--light-silver">1</li>
-            <li className="ph3 pv2 bb b--light-silver">1</li>
-            <li className="ph3 pv2 bb b--light-silver">1</li>
-            <li className="ph3 pv2 bb b--light-silver">1</li>
-          </ul>
-        </ToggleMenu>
-      )
-
-      var SaveControls = null;
-      if (this.state.mod) {
-        SaveControls = (
-          <div className="fl dib absolute f8">... | save</div>
-        )
-      } else {
-        SaveControls = (
-          <div className="fl dib absolute f8">...</div>
-        )
-      }
-
-      return (
-        <div className="cf mr3 relative z-0">
+      
+      return(
+        <div className="cf mr3 relative pr3">
           <div className="w-100 fr dib">
-            <input className="inpt w-100  tr" type="text" value={this.state.val} onChange={this.onChange} placeholder={this.props.data}/>
+            <input className="inpt w-100 tr" 
+                   type="text" 
+                   value={this.state.val} 
+                   onChange={this.onChange} 
+                   placeholder={this.props.placeholder}/>
           </div>
-          
-          {menu}
+          <div className="fl dib absolute f8">
+            <ToggleMenu className="fl dib">
+              {this.props.ctrls}
+            </ToggleMenu>
+            {saveCtrls}
+          </div>  
         </div>
       )
     },
