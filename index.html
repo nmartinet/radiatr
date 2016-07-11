@@ -61,7 +61,7 @@ window['components'] = {
         <div className="cf">
           <div className="fl w-100 pa3">
             <h1 className="f1 tracked tr fw1 bb bw1 b--silver fw1">reactr</h1>
-            <ReactrControls  ctrls={ctrls} />
+            <ReactrControls  ctrls={ctrls} data={data} />
             <Tabs selected="0">
               <div label="Data">
                 <DataEdit data={data} q={q} path={[]}/>
@@ -109,29 +109,22 @@ window['components'] = {
     onClick: function(evnt){ 
       //http://stackoverflow.com/questions/32553158/detect-click-outside-react-component
       var thisNode = ReactDOM.findDOMNode(this)
-      if( !thisNode.contains(evnt.target) )
+      if( !thisNode.contains(evnt.target))
         this.toggleVisibility();
-      
     },
     getInitialState: () => ( {visible: false} ),
-    changeSelectedComponentName: function (e) {
-      //this.props.editor.selectedComponent.name = $(e.target).val();
-      console.log(1)
-        this.setState({visible: false})
-    },
     render: function(){
       let cnames = cn(
         'relative',
         (this.state.visible ? '' : 'no-display')
       );
 
-
       return (
-        <div>
+        <div className="">
           <a onClick={this.toggleVisibility}> 
-            ...
+            \u270E
           </a>
-          <div className={cn(cnames, '')}on>
+          <div className={cn(cnames, 'z-1')}on>
             {this.props.children}
           </div>
         </div>
@@ -257,14 +250,18 @@ window['components'] = {
     onSave: function(e){
       this.props.ctrls.saveToFile();
     },
+    pData: function(){
+      console.log(this.props.data)
+    },
     render: function(){
       return (
         <div className="cf">
-          <div className="fr">
-            <button className="btn" onClick={this.onSave} >
-              Save
-            </button>
-          </div>
+          <button className="btn fr ml2" onClick={this.onSave} >
+            Save
+          </button>
+          <button className="btn fr ml2" onClick={this.pData}>
+            debug data
+          </button>
         </div>
       )
     }
@@ -317,8 +314,8 @@ window['components'] = {
       var Editor = React.createElement(window[q.getType(path) + "Editor"], {data: data, q: q, path: path });
       
       return (
-        <div className="cf w100">
-            {Editor}
+        <div>
+          {Editor}
         </div>
       )
     }
@@ -329,33 +326,70 @@ window['components'] = {
       this.props.q.addArray(path);
     },
     modKey: function(path, newVal, evnt){
-      console.log('modKey')
+      this.props.q.modKey(path, newVal);
       return newVal
     }, 
     addKey: function(path, newVal, evnt){
-      console.log('addkey')
+      this.props.q.addKey(path, newVal);
       return "";
+    },
+    deleteKey: function(path, evnt){
+      if (window.confirm("Delete key?")) {
+        this.props.q.delKey(path);
+      };
+      
+    },
+    changeKeyType: function(path, newType, evnt){
+      if (window.confirm("Change type? value will be deleted")){
+        this.props.q.changeType(path, newType)
+      };
+    },
+    getOptsMenu: function(path){
+      let self = this;
+      let {q} = self.props;
+
+      let dType = q.getType(path);
+      let types = q.getTypes();
+
+      let opts = [
+        (<a onClick={self.deleteKey.bind(self, path)}>Delete</a>),
+        (<div>
+          Data type: <Dropdown options={_.keys(types)} value={dType} onChange={self.changeKeyType.bind(self, path)} />
+         </div>
+        ),
+      ];
+
+      if (dType == "Array") {
+        opts.push(
+          <a>Add entry</a>
+        )
+      };
+
+      let optsUI = _.map(opts, (opt) => {
+        return (
+          <li>
+            {opt}
+          </li>
+        )
+      })
+
+      return (
+        <div className="ba b--silver bg-white pa2 ma0">
+          <h3 className="mt0">Properties</h3>
+          <ul className="list pl0">
+            {optsUI}
+          </ul>
+        </div>
+      );
     },
     render: function(){
       var self = this;
       let {data, q, path} = self.props;
-      let opts = [
-        'add',
-        'delete',
-        'change type',
-        'duplicate to new key',
-      ];
 
-      let optsUI = _.map(opts, (opt) => <li className="ph3 pv2 bb b--light-silver">{opt}</li>)
-
-      let optsMenu =  (<ul className="relative z-top list pl0 ml0 center mw5 ba b--light-silver br3 bg-light-gray">
-            {optsUI}
-          </ul>)
 
       var keyVal = _.map(data, function(val, key){
         var _path = path.concat(key)
-
-        var type = self.props.q.getType(_path);
+        let optsMenu = self.getOptsMenu(_path);
 
         return (
           <div key={key} className="cf">
@@ -379,7 +413,7 @@ window['components'] = {
         <div className="w-100">
           {keyVal}
           <div className="w-25">
-            <TextInput val="" placeholder="new key" onSave={this.addKey} ctrls={optsMenu} path={path}/>
+            <TextInput val="" placeholder="new key" onSave={this.addKey} path={path}/>
           </div>
         </div>
       );
@@ -395,39 +429,65 @@ window['components'] = {
       }
     },
     onSave: function(e){
-      console.log('onsave')
       let newVal = this.props.onSave(this.props.path, this.state.val);
       this.setState({val: newVal, mod:false});
+    },
+    onMouseOver: function(e){
+      this.setState({hover: true});
+    },
+    onMouseOut: function(e){
+      this.setState({hover: false});
+    },
+    onFocus: function(e){
+      this.setState({focused: true});
+    },
+    onBlur: function(e){
+      this.setState({focused: false});
     },
     getInitialState: function(){
       return {
         val: this.props.val || "",
         mod: false,
+        hover: false,
+        focused: false,
       };
     },
     render: function(){
       var saveCtrls;
       if (this.state.mod && !(this.state.val === "")) {
         saveCtrls = (
-          <a className="fl dib" onClick={this.onSave}>
-            save
+          <a className="fl" onClick={this.onSave}>
+            \u2713
           </a>
         )
       };
       
+      let {hover, focused} = this.state;
+
+      let propsBtn = cn(
+        "fl dib absolute f8",
+        (hover || focused ? '' : 'no-display')
+      );
+
       return(
         <div className="cf mr3 relative pr3">
           <div className="w-100 fr dib">
             <input className="inpt w-100 tr" 
                    type="text" 
                    value={this.state.val} 
-                   onChange={this.onChange} 
+                   onChange={this.onChange}
+                   onMouseOver={this.mouseOver}
+                   onMouseOut={this.mouseOut}
+                   onFocus={this.onFocus}
+                   onBlur={this.onBlur}
                    placeholder={this.props.placeholder}/>
           </div>
-          <div className="fl dib absolute f8">
-            <ToggleMenu className="fl dib">
-              {this.props.ctrls}
-            </ToggleMenu>
+          <div className="fl cf absolute f8">
+            <div className="fl">
+              <ToggleMenu>
+                {this.props.ctrls}
+              </ToggleMenu>
+            </div>
             {saveCtrls}
           </div>  
         </div>
@@ -665,6 +725,13 @@ window['config'] = {
       return _getType(readOn(path))
     };
 
+    var changeType = function(path, newType){
+      var newValue = types[newType];
+      doOn(path, function(d){
+        return newValue;
+      })
+    };
+
     var updateValue = function(path, value){
       var value = value;
       doOn(path, function(d){
@@ -678,22 +745,39 @@ window['config'] = {
       doOn(path, function(d){
         return _.extend(d, {[key.toString()]: value});
       })
-    }
+    };
+
+    var modKey = function(path, key){
+      var path = path;
+      var oldKey = path.pop();
+      var newkey = key;
+      doOn(path, function(d){
+        d[newkey] = d[oldKey];
+        delete d[oldKey];
+        return d;
+      });
+    };
+
+    var delKey = function(path){
+      var path = path;
+      var key = path.pop();
+      doOn(path, function(d){
+        delete d[key];
+        return d;
+      })
+    };
 
     var addArray = function(path){
       doOn(path, function(d){
         d.push("")
         return d;
       })
-    }
-
-
+    };
 
     var getTypes = function(){
       return types
     }
    
-
     var init = function(){
 
     };
@@ -706,7 +790,10 @@ window['config'] = {
       getType: getType,
       getTypes: getTypes,
       addKey: addKey,
+      modKey: modKey,
+      delKey: delKey,
       addArray: addArray,
+      changeType: changeType,
     }
 
     init();
