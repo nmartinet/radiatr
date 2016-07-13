@@ -8,7 +8,7 @@
   display: inline-block;
   letter-spacing: .15em;
   margin-bottom: .5em;
-  padding: 1em 2.5em;
+  padding: 0.25em 1em;
   text-decoration: none;
   -webkit-transition: color .4s, background-color .4s, border .4s;
           transition: color .4s, background-color .4s, border .4s;
@@ -41,7 +41,6 @@
   border-bottom: 1px solid #aaa;
   
   /* Browsers have different default form fonts */
-  font-size:13px;
   font-family:Arial;
 }
 
