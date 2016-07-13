@@ -9,6 +9,7 @@
   <script src="libs/lodash.js"></script>
   <script src="libs/react.js"></script>
   <script src="libs/react-dom.js"></script>
+  <script src="libs/react-dom-server.min.js"></script>
   <script src="libs/babel.min.js"></script>
   <script src="libs/polyfill.min.js"></script>
   <script src="libs/browser.min.js"></script>
@@ -26,6 +27,39 @@ window['data'] = {
     {name: "telephone", val: "123-456-7890"},
     {name: "website", val: "nmartinet.github.io"}
   ],
+  skills: {
+    title: "Skills",
+    content: [
+      'excel/vba',
+      'html/js/css/react',
+      'c#/ruby/python',
+      'sql',
+      'perfectily bilungual in French and English',
+    ]
+  },
+  education: {
+    title: "Education",
+    content: [
+      {date: '2007/2011', title: 'John Molson School of Business, Concordia University, Montreal, Quebec', desc: 'Bachelor of Commerce, Major in Accountancy'
+      },
+      {date: '2004/2006', title: 'Collège International Marie de France', desc: 'French Baccalaureate in economics, specialization in mathematics (DEC Equivalent)'
+      }
+    ]
+  },
+  profExp: {
+    title: "Professional Experience",
+    content: [
+      {date: '2014/2015', title: 'Ubisoft - IT Dev - Programer Analyst', desc: ''},
+      {date: '2011/2014', title: 'Ubisoft - Cost Control - Financial Analyst', desc: ''},
+      {date: '2006/2009', 
+       title: 'Caisse Centrale Desjardins - Credit and integrated risk management sector' , 
+       desc: 'Internship - Main jobs included testing new reports being developed, preparing daily, monthly and quarterly reports, performing quarterly reconciliations at month and quarter end. Automating some reports and jobs through excel templates and VBA, performed some translation from French to English. Various other jobs to alleviate work load for the department and to perform essential services during other employee’s vacations.' }
+    ]
+  },
+  Profile: {
+    title: 'About',
+  }
+
 };
 
 window['components'] = {
@@ -59,10 +93,13 @@ window['components'] = {
 
       return (
         <div className="cf">
-          <div className="fl w-100 pa3">
+          <div className="fl w-50">
+            <CV data={data} />
+          </div>
+          <div className="fl w-50 pa3">
             <h1 className="f1 tracked tr fw1 bb bw1 b--silver fw1">reactr</h1>
             <ReactrControls  ctrls={ctrls} data={data} />
-            <Tabs selected="0">
+            <Tabs selected="1">
               <div label="Data">
                 <DataEdit data={data} q={q} path={[]}/>
               </div>
@@ -137,8 +174,14 @@ window['components'] = {
       let val = this.editor.getValue();
       this.props.ctrls.registerComponent(val, selected );
       this.props.root.forceUpdate();
-      this.props.q.updateValue([selected], this.editor.getValue());
-
+      this.props.q.updateValue([selected], val);
+    },
+    newComponent: function(name){
+      this.props.q.addKey([], name, "")
+      return "";
+    },
+    setEditOptions: function(option){
+      this.editor.setOptions(option)
     },
     onComponentChange: function(key){
       if(this.props.components[this.state.selected] != this.editor.getValue()) {
@@ -163,9 +206,13 @@ window['components'] = {
       this.editor = ace.edit('editor');
       this.editor.setTheme("ace/theme/clouds");
       this.editor.getSession().setMode("ace/mode/javascript");
+      this.editor.$blockScrolling = Infinity;
       this.editor.setShowPrintMargin(false);
-      this.editor.setOptions({minLines: 25});
-      this.editor.setOptions({maxLines: 50});
+      this.setEditOptions({
+        minLines: 25,
+        maxLines: 50,
+        fontSize: "14pt",
+      })
       this.editor.setValue(this.props.components[this.state.selected]);
     },
     getInitialState: function(){
@@ -179,29 +226,26 @@ window['components'] = {
       let {components} = self.props;
       let buffer = self.state.buffer;
 
-      var compList = _.map(components, function(comp, key){
-        return (
-          <div key={key}>
-            {key}
-          </div>
-        )
-      })
-
       return (
-        <div className="cf">
-          <div className="fl w-25">
-            <ComponentList components={components} buffer={buffer} onClick={this.onComponentChange} />
+        <div className="dt w-100">
+          <div className="dtc w-25">
+            <ComponentList 
+              components={components} 
+              selected={self.state.selected}
+              buffer={buffer} 
+              onClick={this.onComponentChange} 
+              newComponent={this.newComponent}/>
           </div>
           
-          <div className="fl w-75 pl3 pt3">
-            <ComponentEditorFileControls updateComponent={self.updateCurrentComponent}  />
+          <div className="dtc w-75 pl3 pt3">
+            <ComponentEditorFileControls 
+              updateComponent={self.updateCurrentComponent}  
+              setOption={self.setEditOptions}/>
             
             <div id="editor">
             </div>
           
           </div>
-
-          
         </div>
       )
     },
@@ -210,15 +254,37 @@ window['components'] = {
     onApply: function(){
       this.props.updateComponent();
     },
+    setFontSize: function(size){
+      this.props.setOption({fontSize: size});
+    },
     render: function(){
       let self = this;
       let itmClass = "f6 f5-ns b db pa2 link dim dark-gray ba b--black-20";
 
+      let fontSizes = _.map(_.range(12, 18), (n) => n+"pt" );
+
+      let listCn = "dib mb1 mr3"
+
       return (
         <ul className="list ma0 pl0 pb2">
-          <li className="dib mb1 mr1">
-            <a href="#" className={itmClass} onClick={self.onApply}>Apply</a>
+          <li className={listCn}>
+            <a href="#" className={itmClass} onClick={self.onApply}>
+              Apply
+            </a>
           </li>
+
+          <li className={listCn}>
+            <div className="f6 b">
+              font size
+            </div>
+            <div>
+              <Dropdown 
+                options={fontSizes}
+                value={fontSizes[0]}
+                onChange={self.setFontSize}/>
+            </div>
+          </li>
+
         </ul>
       )
     },
@@ -228,38 +294,82 @@ window['components'] = {
       evnt.preventDefault();
       this.props.onClick(key);
     },
+    newComponent: function(name){
+      this.props.newComponent(name)
+      return "";
+    },
     render: function(){
       var self = this;
       let {components, buffer} = self.props;
 
       var compList = _.map(components, function(comp, key){
         let modIndic = _.has(buffer, key) ? '\u2022' : "";
+        let cNames = cn(
+          "ph3 pv3 bb b--light-silver",
+          (key == self.props.selected) ? 'b' : ''
+        );
         return (
-          <li className="ph3 pv3 bb b--light-silver" key={key} onClick={self.onClick.bind(self, key)}>{key} { modIndic } </li>
+          <li className={cNames} key={key} onClick={self.onClick.bind(self, key)}>{key}{modIndic}</li>
         )
       })
 
       return (
-        <ul className="list pl0 ml0 center mw6 ba b--light-silver br2">
-          {compList}
-        </ul>
+        <div>
+          <TextInputButton onClick={this.newComponent} placeholder="new component" buttonValue="add"/>
+          <ul className="list pl0 ml0 center mw6 ba b--light-silver br2">
+            {compList}
+          </ul>
+        </div>
+        
       );
+    }
+  }`,
+  TextInputButton: `{
+    onChange: function(evnt){
+      this.setState({value: evnt.target.value})
+    },
+    onClick: function(evnt){
+      this.setState({value: this.props.onClick(this.state.value)});
+    },
+    getInitialState: function(){
+      return {value: this.props.value || ""};
+    },
+    render: function(){
+      return (
+        <div>
+          <input className="inpt" 
+                     type="text" 
+                     value={this.state.value} 
+                     onChange={this.onChange}
+                     placeholder={this.props.placeholder}/>
+          <button className="btn" onClick={this.onClick}>
+            {this.props.buttonValue || "ok"}
+          </button>
+        </div>
+      )
     }
   }`,
   ReactrControls: `{
     onSave: function(e){
       this.props.ctrls.saveToFile();
     },
+    onSaveStatic: function(e){
+      this.props.ctrls.saveStaticDoc();
+    },
     pData: function(){
       console.log(this.props.data)
     },
     render: function(){
+      let btnClass="btn fr ml2";
       return (
         <div className="cf">
-          <button className="btn fr ml2" onClick={this.onSave} >
+          <button className={btnClass} onClick={this.onSave} >
             Save
           </button>
-          <button className="btn fr ml2" onClick={this.pData}>
+          <button className={btnClass} onClick={this.onSaveStatic}>
+            Save static doc
+          </button>
+          <button className={btnClass} onClick={this.pData}>
             debug data
           </button>
         </div>
@@ -469,6 +579,17 @@ window['components'] = {
         (hover || focused ? '' : 'no-display')
       );
 
+      let ctrls;
+      if (this.props.ctrls) {
+        ctrls = (
+          <div className="fl">
+            <ToggleMenu>
+              {this.props.ctrls}
+            </ToggleMenu>
+          </div>
+        ) 
+      };
+
       return(
         <div className="cf mr3 relative pr3">
           <div className="w-100 fr dib">
@@ -483,13 +604,9 @@ window['components'] = {
                    placeholder={this.props.placeholder}/>
           </div>
           <div className="fl cf absolute f8">
-            <div className="fl">
-              <ToggleMenu>
-                {this.props.ctrls}
-              </ToggleMenu>
-            </div>
+            {ctrls}
             {saveCtrls}
-          </div>  
+          </div> 
         </div>
       )
     },
@@ -588,23 +705,42 @@ window['components'] = {
       return (
         <div className="mw9 center pa3 ph5-ns">
           <CVHeader name={data.name}/>
-          <div className="cf">
-            <ContactBox contactInfo={data.contact} />
-          </div>
+          <ContactBox contactInfo={data.contact} />
+          <CVSection title={data.skills.title}>
+            <VList elems={data.skills.content} />
+          </CVSection> 
+          <CVSection title={data.education.title}>
+            <ChronoList elems={data.education.content} />
+          </CVSection>
+          <CVSection title={data.profExp.title} >
+            <ChronoList elems={data.profExp.content} />
+          </CVSection>
         </div>
-      ); //end return
+      )
     },
   }`,
   CVHeader: `{
     render: function() {
       let {name} = this.props;
-
       return (
-        <div className="bb bw2 mb5" >
-          <h1 className="f-5 fw1 tracked tr mb2">{name}</h1>
+        <div className="bb bw1 mb4" >
+          <h1 className="f1 fw1 tracked tr mb0">{name}</h1>
         </div>
       );
 
+    }
+  }`,
+  ContactList: `{
+    render: function(){
+      let contact = _(this.props.contactInfo)
+        .map( (info) => info.val )
+        .reduce( (info, accum) => info + " // " + accum )
+
+      return (
+        <div className="fr">
+          {contact}
+        </div>
+      )
     }
   }`,
   ContactBox: `{
@@ -613,7 +749,7 @@ window['components'] = {
 
       var boxContent = contactInfo.map(function(info){
         return (
-          <li key={info.name} className="cf f3 pb3">
+          <li key={info.name} className="cf f5 pb3">
             <div className="fl">{info.name}</div>
             <div className="fr">{info.val}</div>
           </li>  
@@ -621,9 +757,9 @@ window['components'] = {
       })
 
       return (
-        <div className="w-5 bg-light-gray fr pa3">
-          <span className="f1 bb bw1">Contact Information</span>
-          <ul className="list pa0">
+        <div className="w-25 ba bw1 b--light-silver fr pa3 dib">
+          <h2 className="f3 mt0 tc">Contact Information</h2>
+          <ul className="list pa0 ma0">
             {boxContent}
           </ul>
         </div>
@@ -631,12 +767,73 @@ window['components'] = {
 
     }
   }`,
+  CVSection: `{
+    render: function(){
+      return (
+        <div className="fl">
+          <h2 className="tl f2 fw5 mb2 mt0">
+            {this.props.title}
+          </h2>
+          {this.props.children}
+        </div>
+      )
+    }
+  }`,
+  VList: `{
+    render: function(){
+      let listElems = _.map(this.props.elems, function(elem, i){
+        return <li key={i} className="f4 mb2">{elem}</li>
+      })
+      return (
+        <ul className="list pa0 ma0 pb2 mb2 pl4">
+          {listElems}
+        </ul>
+      )
+    }
+  }`,
+  ChronoList: `{
+    render: function(){
+      let listElems = _.map(this.props.elems, function(elem, i){
+        return (
+          <li key={i} className="cf w-100 mb3">
+            <div className="fl w-10 tc b pr2">{elem.date}</div>
+            <div className="fl w-25 i pr4">{elem.title}</div>
+            <div className="fl w-50">{elem.desc}</div>
+          </li>
+        )
+      })
+      return (
+        <ul className="cf w-100 list pa0 mb0 pl4">
+          {listElems}
+        </ul>
+      )
+    }
+  }`,
+
 };
 
 window['config'] = {
-  elem: 'root',
-  data: 'data',
-  components: 'components',
+  elem:         'root',
+  data:         'data',
+  docRoot:      'CV',
+  components:   'components',
+  title:        'reactr',
+  stylesheets:  ["css/tachyons.min.css",  
+                  "css/style.css", 
+                ],
+  scripts:      [ "libs/jquery.js",
+                  "libs/lodash.js",
+                  "libs/react.js",
+                  "libs/react-dom.js",
+                  "libs/react-dom-server.min.js",
+                  "libs/babel.min.js",
+                  "libs/polyfill.min.js",
+                  "libs/browser.min.js",
+                  "libs/ace.js",
+                ],
+  datasets:     [{name: 'data',       type: 'data'},
+                 {name: 'components', type: 'components' },
+                ],
 }
 
 </script>
@@ -661,6 +858,7 @@ window['config'] = {
   }
 
   var ils = function(){
+
     return arguments
   }
 
@@ -739,8 +937,8 @@ window['config'] = {
       });
     };
 
-    var addKey = function(path, key){
-      var value = types['Object'];
+    var addKey = function(path, key, newValue){
+      var value = newValue || types['Object'];
       var key = key
       doOn(path, function(d){
         return _.extend(d, {[key.toString()]: value});
@@ -806,14 +1004,15 @@ window['config'] = {
 
 
 
-  var Reactr = function(config){
+  var Reactr = function(){
     var self        = this;
-    var config      = window[config];
-    var data        = {};
-    var components  = {};
-    var ctrls       = {};
+    var config;
+    var configContainer = {}
+    var datasets        = {};
+    var components      = {};
+    var ctrls           = {};
 
-    var promtForSave = function(content){
+    var promptForSave = function(content){
       var el = document.createElement('a');
       el.setAttribute('href', 
                       'data:text/plain;charset=utf-8,' 
@@ -842,7 +1041,7 @@ window['config'] = {
         datasets    = [], 
       } = content;
 
-      let reactorCode = `<script id="reactr" type="text/babel">` + getReactrCode() + "</" + "script>";
+      let reactrCode = `<script id="reactr" type="text/babel">` + getReactrCode() + "</" + "script>";
 
       let cssImports = _(stylesheets)
                           .map((ss) => `<link rel="stylesheet" href="${ss}">`)
@@ -882,30 +1081,76 @@ window['config'] = {
     }
 
     var saveToFile = function(){
+      let currConf = configContainer.data
+
+
+
       let fileContent = {
-        title:        "reactr",
-        stylesheets:  ["css/tachyons.min.css",  
-                       "css/style.css", 
-                      ],
-        scripts:      [ "libs/jquery.js",
-                        "libs/lodash.js",
-                        "libs/react.js",
-                        "libs/react-dom.js",
-                        "libs/babel.min.js",
-                        "libs/polyfill.min.js",
-                        "libs/browser.min.js",
-                        "libs/ace.js",
-                      ],
-        datasets:     [{name: 'config',     data: config},
+        title:        currConf.title,
+        stylesheets:  currConf.stylesheets,
+        scripts:      currConf.scripts,
+        //get data here
+        datasets:     [{name: 'config',     data: currConf},
                        {name: 'data',       data: data.data},
                        {name: 'components', data:components.data },
                       ],
+                       
       }
 
-
-      promtForSave(generateFile(fileContent))
+      promptForSave(generateFile(fileContent))
     };
 
+    var generateStaticDoc = function(content){
+      //defaults
+      let {
+        title       = 'reactr',
+        meta        = `<meta charset="utf-8" />`,
+        stylesheets = [],
+        body        = ""
+      } = content;
+
+      let cssImports = _(stylesheets)
+                          .map((ss) => `<link rel="stylesheet" href="${ss}">`)
+                          .reduce((x, a) => `${x} \n        ${a}`);
+
+
+      let fileContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${title}</title>
+          ${meta}
+          ${cssImports}
+        </head>
+        <body>
+          ${body}
+        </body>
+        </html>
+      `
+
+      return  fileContent
+    }
+
+
+
+    var saveStaticDoc = function(){
+      let currConf = configContainer.data;
+      let body = ReactDOMServer.renderToString(
+        React.createElement(window[currConf.docRoot], {data: data.data})
+      )
+      
+      let fileContent = {
+        title:        currConf.title,
+        title:        currConf.title,
+        stylesheets:  currConf.stylesheets,
+        body:         body
+
+      };
+
+      promptForSave(generateStaticDoc(fileContent))
+
+
+    };
 
     var registerComponent = function(component, name){
       var presets = { presets: ['es2015', 'react'] };
@@ -913,27 +1158,44 @@ window['config'] = {
       compCode = Babel.transform(compCode, presets).code;
 
       eval(compCode)
-    }
+    };
 
     var registerComponents = function(components){
       _.forEach(components, registerComponent);
     }; 
 
     var init = function(){
-      registerComponents( window[config.components] )
-      data = Container(window[config.data]);
-      components = Container(window[config.components])
+      config = window["config"];
+
+      _(config.datasets)
+        .filter({type: 'components'})
+        .forEach(function(comp){
+          registerComponents(window[comp.name]);
+          components = Container(window[comp.name]);
+        })
+
+      _(config.datasets)
+        .filter({type: 'data'})
+        .forEach(function(ds){
+          data = Container(window[ds.name]);
+        });
+
+      configContainer = Container(config);
     };
 
     init();
 
     ctrls = {
       registerComponent: registerComponent,
-      saveToFile: saveToFile
+      saveToFile: saveToFile,
+      saveStaticDoc: saveStaticDoc,
     }
 
     var run = function(){
       const rootElement = document.getElementById(config.elem)
+
+      let props = {};
+
       ReactDOM.render(
         <ReactrRoot data={data} components={components} ctrls={ctrls} />,
         rootElement
@@ -946,7 +1208,7 @@ window['config'] = {
 
   }
 
-  var reactr = Reactr('config');
+  var reactr = Reactr();
 
   reactr.run();
 
