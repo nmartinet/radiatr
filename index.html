@@ -14,6 +14,7 @@
   <script src="libs/polyfill.min.js"></script>
   <script src="libs/browser.min.js"></script>
   <script src="libs/ace.js"></script>
+  <script src="libs/showdown.min.js"></script>
 </head><body>
 
 <div id="root"></div>
@@ -49,12 +50,42 @@ window['data'] = {
   profExp: {
     title: "Professional Experience",
     content: [
-      {date: '2014/2015', title: 'Ubisoft - IT Dev - Programer Analyst', desc: ''},
-      {date: '2011/2014', title: 'Ubisoft - Cost Control - Financial Analyst', desc: ''},
+      {date: '2014/2015', title: 'Ubisoft - IT Dev - Programer Analyst', desc: `
+Programer Analyst
+- As port of IT-Dev - develop and maintain internal applications for the various internal services (hr/logistics/fincances/etc)
+- Analyse and understand internal customers' business requirements
+- Work alongside other anylsts to design, code and test modiifcations to internal software
+      `},
+      {date: '2011/2014', 
+       title: 'Ubisoft - Cost Control - Financial Analyst', 
+       desc: `
+Financial Analyst
+- Design, implement and maintain
+  - Reports and finaacial planning tools used by the projects to prepare and follow their budgets.
+  - Local datawarehouses to better answer local needs
+- Follow the budget of various games projects
+  - Act as support and main point of contact for any financial subjec for the games porjects' producer.
+  - Analyse and maintain budgets and forecasts.
+  - Setup initial bugets
+- Follow and analyse budgets for the headoffice.
+  - Analyse and control costs for the headoffice
+  - Prepare reports on the state of the budgets. 
+- Ensure proper financial information is shared between the projects' productions team, local management and the headoffice.
+- Calculate the yearly SRED credits
+       `},
       {date: '2006/2009', 
        title: 'Caisse Centrale Desjardins - Credit and integrated risk management sector' , 
-       desc: 'Internship - Main jobs included testing new reports being developed, preparing daily, monthly and quarterly reports, performing quarterly reconciliations at month and quarter end. Automating some reports and jobs through excel templates and VBA, performed some translation from French to English. Various other jobs to alleviate work load for the department and to perform essential services during other employee’s vacations.' }
-    ]
+       desc: 
+`Internship
+  Main jobs included 
+
+  - testing new reports being developed
+  - preparing daily, monthly and quarterly reports
+  - performing quarterly reconciliations at month and quarter end. 
+  - Automating some reports and jobs through excel templates and VBA
+  - performed some translation from French to English
+  - Various other jobs to alleviate work load for the department and to perform essential services during other employee’s vacations.` 
+}]
   },
   Profile: {
     title: 'About',
@@ -703,6 +734,8 @@ window['components'] = {
   CV: `{
     render: function(){
       let {data} = this.props;
+      let mdConverter = new showdown.Converter();
+
       return (
         <div className="mw9 center pa3 ph5-ns">
           <CVHeader name={data.name}/>
@@ -715,7 +748,7 @@ window['components'] = {
                 <ChronoList elems={data.education.content} />
               </CVSection>
               <CVSection title={data.profExp.title} >
-                <ChronoList elems={data.profExp.content} />
+                <ChronoList elems={data.profExp.content} mdConverter={mdConverter}/>
               </CVSection>
           </div>
         </div>
@@ -805,15 +838,26 @@ window['components'] = {
   }`,
   ChronoList: `{
     render: function(){
-      let listElems = _.map(this.props.elems, function(elem, i){
+      let self = this;
+      let {elems} = this.props;
+
+      if (self.props.mdConverter) {
+        elems = _.map(elems, function(elem){
+          elem.desc = self.props.mdConverter.makeHtml(elem.desc);
+          return elem;
+        })
+      }; 
+
+      let listElems = _.map(elems, function(elem, i){
         return (
           <li key={i} className="cf w-100 mb3">
             <div className="fl w-10 tc b pr2">{elem.date}</div>
             <div className="fl w-25 i pr4">{elem.title}</div>
-            <div className="fl w-50">{elem.desc}</div>
+            <div className="fl w-50" dangerouslySetInnerHTML={ {__html: elem.desc}}></div>
           </li>
         )
       })
+
       return (
         <ul className="cf w-100 list pa0 mb0 pl4">
           {listElems}
