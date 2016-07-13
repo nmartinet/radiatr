@@ -706,16 +706,18 @@ window['components'] = {
       return (
         <div className="mw9 center pa3 ph5-ns">
           <CVHeader name={data.name}/>
-          <ContactBox contactInfo={data.contact} />
-          <CVSection title={data.skills.title}>
-            <VList elems={data.skills.content} />
-          </CVSection> 
-          <CVSection title={data.education.title}>
-            <ChronoList elems={data.education.content} />
-          </CVSection>
-          <CVSection title={data.profExp.title} >
-            <ChronoList elems={data.profExp.content} />
-          </CVSection>
+          <ContactList contactInfo={data.contact} />
+          <div className="pa4">
+              <CVSection title={data.skills.title}>
+                <VList elems={data.skills.content} />
+              </CVSection> 
+              <CVSection title={data.education.title}>
+                <ChronoList elems={data.education.content} />
+              </CVSection>
+              <CVSection title={data.profExp.title} >
+                <ChronoList elems={data.profExp.content} />
+              </CVSection>
+          </div>
         </div>
       )
     },
@@ -724,7 +726,7 @@ window['components'] = {
     render: function() {
       let {name} = this.props;
       return (
-        <div className="bb bw1 mb4" >
+        <div className="bb bw1 mb3" >
           <h1 className="f1 fw1 tracked tr mb0">{name}</h1>
         </div>
       );
@@ -732,16 +734,14 @@ window['components'] = {
     }
   }`,
   ContactList: `{
-    render: function(){
-      let contact = _(this.props.contactInfo)
-        .map( (info) => info.val )
-        .reduce( (info, accum) => info + " // " + accum )
-
+    render: function() {
+      let {name} = this.props;
       return (
-        <div className="fr">
-          {contact}
+        <div className="bb bw1 mb3" >
+          <h1 className="f1 fw1 tracked tr mb0">{name}</h1>
         </div>
-      )
+      );
+
     }
   }`,
   ContactBox: `{
@@ -771,10 +771,19 @@ window['components'] = {
   CVSection: `{
     render: function(){
       return (
-        <div className="fl">
-          <h2 className="tl f2 fw5 mb2 mt0">
-            {this.props.title}
-          </h2>
+        <div className="fl mb5 w-100">
+          <div className="dt">
+            <div className="dtc" style={{whiteSpace: "nowrap"}}>
+              <h2 className="tl f3 fw5 mb2 mt0 fw1 tracked w-100"
+                  >
+                {this.props.title}
+              </h2>
+            </div>
+            <div className="dtc w-100 v-mid pl2">
+              <div className="bb w-100 b--light-silver"></div>
+            </div>
+          </div>
+        
           {this.props.children}
         </div>
       )
@@ -783,7 +792,7 @@ window['components'] = {
   VList: `{
     render: function(){
       let listElems = _.map(this.props.elems, function(elem, i){
-        return <li key={i} className="f4 mb2">{elem}</li>
+        return <li key={i} className="mb2">{elem}</li>
       })
       return (
         <ul className="list pa0 ma0 pb2 mb2 pl4">
