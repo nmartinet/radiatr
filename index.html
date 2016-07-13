@@ -734,14 +734,16 @@ window['components'] = {
     }
   }`,
   ContactList: `{
-    render: function() {
-      let {name} = this.props;
+     render: function(){
+      
+      let contact = _(this.props.contactInfo)
+        .map( (info) => info.val )
+        .reduce( (info, accum) => info + " // " + accum )
       return (
-        <div className="bb bw1 mb3" >
-          <h1 className="f1 fw1 tracked tr mb0">{name}</h1>
+        <div className="fr">
+          {contact}
         </div>
-      );
-
+      )
     }
   }`,
   ContactBox: `{
