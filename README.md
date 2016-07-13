@@ -33,14 +33,41 @@ Download the html. Start editing. Save changes.
 - Data Editor
   - Delete Array
   - Reorder Array
+  - show pros pencil on hover/focus
+  - value editor -- if long text change to textarea
+  - array list - bg number too big when single line - 
+  - array editor - per entry props/editor
+  - array editor - for single line bg number a bit much
+  - add kb shortucts 
+
 
 - Component Editor
   - Cleanup component list
+  - Scrollable list
   - Editor Controls
     - change editor settings - font/theme/etc..
 
 - Settings
   - Move settings to an editable container
+
+- Setting org
+  - App settings -- deps/stylsheets/name/data etc...
+  - Reactr Settings
+    - editor state/settings - font size, theme, etc.
+
+- Containers
+  - Containers all the way down....
+    - everything isa container
+    - components and setigns are special cases
+      - laod a seting container for these containers first for spec methods etc (ie type f editro for component/how to register components etc..)
+
+- Find a way to have meta/props
+  - shadow container - tied to the path if existing?
+  - 
+
+- Component Container
+  - Nested structure//emulate namespace (CV.Header)
+  - Group defualt/reuaslbe ctrsl in namespaces
 
 - app
   - move app to an editable container
@@ -52,3 +79,4 @@ Download the html. Start editing. Save changes.
 - Dependencies 
   - For dev purposes the dependencies are local - save on reload time etc...
   - Change to be able to get forma CDN, inline them on export or downlad them for dev
+
