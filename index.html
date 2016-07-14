@@ -52,8 +52,8 @@ window['data'] = {
     content: [
       {date: '2014/2015', title: 'Ubisoft - IT Dev - Programer Analyst', desc: `
 Programer Analyst
-- As port of IT-Dev - develop and maintain internal applications for the various internal services (hr/logistics/fincances/etc)
-- Analyse and understand internal customers' business requirements
+- As part of IT-Dev - develop and maintain internal applications for the various internal services (hr/logistics/fincances/etc)
+- Analyse and understand internal customers business requirements
 - Work alongside other anylsts to design, code and test modiifcations to internal software
       `},
       {date: '2011/2014', 
@@ -64,13 +64,13 @@ Financial Analyst
   - Reports and finaacial planning tools used by the projects to prepare and follow their budgets.
   - Local datawarehouses to better answer local needs
 - Follow the budget of various games projects
-  - Act as support and main point of contact for any financial subjec for the games porjects' producer.
+  - Act as support and main point of contact for any financial subjec for the games porjects producer.
   - Analyse and maintain budgets and forecasts.
   - Setup initial bugets
 - Follow and analyse budgets for the headoffice.
   - Analyse and control costs for the headoffice
   - Prepare reports on the state of the budgets. 
-- Ensure proper financial information is shared between the projects' productions team, local management and the headoffice.
+- Ensure proper financial information is shared between the projects productions team, local management and the headoffice.
 - Calculate the yearly SRED credits
        `},
       {date: '2006/2009', 
@@ -93,35 +93,77 @@ Financial Analyst
 
 };
 
+window['dataSettings'] = {
+  dataset: 'data', 
+  reactr:{
+    editor: 'DataEdit'
+  }
+}
+
+window['componentsSettings'] = {
+  dataset: 'components',
+  functions: function() {
+    var self = {};
+    self.registerComponent =  function(component, name){
+      var presets = { presets: ['es2015', 'react'] };
+      var compCode = "window['" + name + "'] = React.createClass(" + component + ")";
+      compCode = Babel.transform(compCode, presets).code;
+
+      eval(compCode)
+    }
+
+    self.registerComponents = function(components){
+      _.forEach(components, self.registerComponent);
+    };
+
+    return self;
+  }, 
+  hooks: {
+    'onInit': 'registerComponents',
+    'onChange': 'registerComponent',
+  },
+  reactr:{
+    editor: 'ComponentEditor',
+  }
+}
+
 
 window['components'] = {
   ReactrRoot: `{
     init: function(){
-      var self = this;
-      let {data, components} = self.props;
+      let self = this;
+      let {datasets} = this.props;
+      let state = {funcs: {}};
 
-      data.q.registerCallback('onChange', function(data){
-        self.setState({data: data});
+      _.forEach(datasets, function(ds, name){
+        state.funcs[name] = ds.q;
+        state[name] = ds.data;
+        ds.q.registerCallback('onChange', function(data){
+          let newSate = {};
+          newState[name] = data
+          self.setState(newState);
+        })
       });
 
-      components.q.registerCallback('onChange', function(data){
-        self.setState({components: data});
-      });
-
-      return {
-        data: data.data,
-        q: data.q,
-        components: components.data,
-        componentsQ: components.q
-      };
+      return state;
     },
     getInitialState: function(){
       return this.init();
     },
     render: function(){
-      let {data, q, components, componentsQ} = this.state;
+      let {datasets} = this.state;
       let {ctrls} = this.props;
-      let root = this;
+      let self = this;
+
+      let dsEditors = _.map(this.props.datasets, function(ds){
+        let {name, editor} = ds.q.getInfo();
+
+        return (
+          <div label={name}>
+            {React.createElement(window[editor], {data: self.state[name], q: self.state.funcs[name], path: [], root:  self })}
+          </div>
+        );
+      });
 
       return (
         <div className="cf">
@@ -130,15 +172,9 @@ window['components'] = {
           </div>
           <div className="fl w-50 pa3">
             <h1 className="f1 tracked tr fw1 bb bw1 b--silver fw1">reactr</h1>
-            <ReactrControls  ctrls={ctrls} data={data} />
-            <Tabs selected="1">
-              <div label="Data">
-                <DataEdit data={data} q={q} path={[]}/>
-              </div>
-
-              <div label="Components">
-                <ComponentEditor components={components} q={componentsQ} ctrls={ctrls} root={root}/>
-              </div>
+            <ReactrControls  ctrls={ctrls} data={self.state.data} />
+            <Tabs selected="0">
+              {dsEditors}
             </Tabs>
             
           </div>
@@ -204,7 +240,7 @@ window['components'] = {
     updateCurrentComponent: function(){
       let {selected, buffer} = this.state;
       let val = this.editor.getValue();
-      this.props.ctrls.registerComponent(val, selected );
+      this.props.q.registerComponent(val, selected );
       this.props.root.forceUpdate();
       this.props.q.updateValue([selected], val);
     },
@@ -216,7 +252,7 @@ window['components'] = {
       this.editor.setOptions(option)
     },
     onComponentChange: function(key){
-      if(this.props.components[this.state.selected] != this.editor.getValue()) {
+      if(this.props.data[this.state.selected] != this.editor.getValue()) {
         var buffer = this.state.buffer;
         buffer[this.state.selected] = this.editor.getValue();
         this.setState({buffer: buffer});
@@ -230,7 +266,7 @@ window['components'] = {
       if(_.has(this.state.buffer, key)){
         value =this.state.buffer[key]; 
       } else {
-        value = this.props.components[key]
+        value = this.props.data[key]
       }
        this.editor.setValue(value);
     },
@@ -245,24 +281,24 @@ window['components'] = {
         maxLines: 50,
         fontSize: "14pt",
       })
-      this.editor.setValue(this.props.components[this.state.selected]);
+      this.editor.setValue(this.props.data[this.state.selected]);
     },
     getInitialState: function(){
       return {
-        selected: _.keys(this.props.components)[0],
+        selected: _.keys(this.props.data)[0],
         buffer: {},
       }
     },
     render: function(){
       var self = this;
-      let {components} = self.props;
+      let {data} = self.props;
       let buffer = self.state.buffer;
 
       return (
         <div className="dt w-100">
           <div className="dtc w-25">
             <ComponentList 
-              components={components} 
+              components={data} 
               selected={self.state.selected}
               buffer={buffer} 
               onClick={this.onComponentChange} 
@@ -767,11 +803,12 @@ window['components'] = {
     }
   }`,
   ContactList: `{
-     render: function(){
+    render: function(){  
       
       let contact = _(this.props.contactInfo)
         .map( (info) => info.val )
         .reduce( (info, accum) => info + " // " + accum )
+      
       return (
         <div className="fr">
           {contact}
@@ -865,14 +902,11 @@ window['components'] = {
       )
     }
   }`,
-
 };
 
 window['config'] = {
   elem:         'root',
-  data:         'data',
   docRoot:      'CV',
-  components:   'components',
   title:        'reactr',
   stylesheets:  ["css/tachyons.min.css",  
                   "css/style.css", 
@@ -887,9 +921,9 @@ window['config'] = {
                   "libs/browser.min.js",
                   "libs/ace.js",
                 ],
-  datasets:     [{name: 'data',       type: 'data'},
-                 {name: 'components', type: 'components' },
-                ],
+  datasets:     ['dataSettings', 
+                 'componentsSettings',
+                 ],
 }
 
 </script>
@@ -918,11 +952,14 @@ window['config'] = {
     return arguments
   }
 
-  var Container = function(data){
-    var self = this;
-    var data = data;
-    var functions = {};
+  var Container = function(settings){
+    var data;
+    var name;
+    var editor;
+    var functions;
+    var editor;
     var callbacks = {
+      'onInit':   [],
       'onChange': [],
     };
 
@@ -930,7 +967,8 @@ window['config'] = {
       'Object': {},
       'Array': [],
       'Value': '',
-    }
+    };
+
 
     var registerCallback = function(evnt, cb){
       if(!_.has(callbacks, evnt)) callbacks[evnt] = [];
@@ -938,7 +976,7 @@ window['config'] = {
     };
 
     var trigger = function(evnt, arg){
-      var _arg = arg;
+      var _arg = arg || data;
       if(_.has(callbacks, evnt))
         _.forEach(callbacks[evnt], function(cb){
           cb(_arg);
@@ -1030,27 +1068,49 @@ window['config'] = {
 
     var getTypes = function(){
       return types
-    }
-   
-    var init = function(){
-
     };
 
-    functions = {
-      doOn: doOn,
-      readOn: readOn,
-      updateValue: updateValue,
-      registerCallback: registerCallback,
-      getType: getType,
-      getTypes: getTypes,
-      addKey: addKey,
-      modKey: modKey,
-      delKey: delKey,
-      addArray: addArray,
-      changeType: changeType,
+    var getInfo = function(){
+      return {
+        name: name,
+        editor: editor,
+      }
     }
+   
+  
+    var init = function(settings){
+      data      = window[settings.dataset];
+      name      = settings.dataset;
+      editor    = settings.reactr.editor;
+      if(settings.functions)
+        functions = settings.functions();
 
-    init();
+      functions = _.merge(functions, {
+        getInfo: getInfo,
+        doOn: doOn,
+        readOn: readOn,
+        updateValue: updateValue,
+        registerCallback: registerCallback,
+        getType: getType,
+        getTypes: getTypes,
+        addKey: addKey,
+        modKey: modKey,
+        delKey: delKey,
+        addArray: addArray,
+        changeType: changeType,
+      })
+
+      if( _.has(settings, 'hooks')){
+        _.forEach(settings.hooks, function(cb, h){
+          functions.registerCallback(h, functions[cb])
+        });
+      }
+
+
+      trigger('onInit')
+    };
+
+    init(settings);
 
     return {
       data: data,
@@ -1058,14 +1118,10 @@ window['config'] = {
     }
   };
 
-
-
   var Reactr = function(){
     var self        = this;
     var config;
-    var configContainer = {}
     var datasets        = {};
-    var components      = {};
     var ctrls           = {};
 
     var promptForSave = function(content){
@@ -1187,8 +1243,6 @@ window['config'] = {
       return  fileContent
     }
 
-
-
     var saveStaticDoc = function(){
       let currConf = configContainer.data;
       let body = ReactDOMServer.renderToString(
@@ -1204,45 +1258,20 @@ window['config'] = {
       };
 
       promptForSave(generateStaticDoc(fileContent))
-
-
     };
-
-    var registerComponent = function(component, name){
-      var presets = { presets: ['es2015', 'react'] };
-      var compCode = "window['" + name + "'] = React.createClass(" + component + ")";
-      compCode = Babel.transform(compCode, presets).code;
-
-      eval(compCode)
-    };
-
-    var registerComponents = function(components){
-      _.forEach(components, registerComponent);
-    }; 
 
     var init = function(){
       config = window["config"];
-
       _(config.datasets)
-        .filter({type: 'components'})
-        .forEach(function(comp){
-          registerComponents(window[comp.name]);
-          components = Container(window[comp.name]);
-        })
-
-      _(config.datasets)
-        .filter({type: 'data'})
         .forEach(function(ds){
-          data = Container(window[ds.name]);
+          let dsSettings = window[ds];
+          datasets[dsSettings.dataset] = Container(dsSettings);
         });
-
-      configContainer = Container(config);
     };
 
     init();
 
     ctrls = {
-      registerComponent: registerComponent,
       saveToFile: saveToFile,
       saveStaticDoc: saveStaticDoc,
     }
@@ -1250,10 +1279,8 @@ window['config'] = {
     var run = function(){
       const rootElement = document.getElementById(config.elem)
 
-      let props = {};
-
       ReactDOM.render(
-        <ReactrRoot data={data} components={components} ctrls={ctrls} />,
+        <ReactrRoot datasets={datasets} ctrls={ctrls} />,
         rootElement
       );
     };
