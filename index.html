@@ -31,66 +31,61 @@ window['data'] = {
   skills: {
     title: "Skills",
     content: [
-      'excel/vba',
-      'html/js/css/react',
-      'c#/ruby/python',
+      'excel, vba',
+      'html, js, css',
+      'c#, ruby, python',
       'sql',
-      'perfectily bilungual in French and English',
+      'French and English',
     ]
   },
   education: {
     title: "Education",
     content: [
-      {date: '2007/2011', title: 'John Molson School of Business, Concordia University, Montreal, Quebec', desc: 'Bachelor of Commerce, Major in Accountancy'
+      {date: '2007-2011', title: 'John Molson School of Business, Concordia University, Montreal, Quebec', desc: 'Bachelor of Commerce, Major in Accountancy'
       },
-      {date: '2004/2006', title: 'Collège International Marie de France', desc: 'French Baccalaureate in economics, specialization in mathematics (DEC Equivalent)'
+      {date: '2004-2006', title: 'Collège International Marie de France', desc: 'French Baccalaureate in economics, specialization in mathematics (DEC Equivalent)'
       }
     ]
   },
   profExp: {
     title: "Professional Experience",
     content: [
-      {date: '2014/2015', title: 'Ubisoft - IT Dev - Programer Analyst', desc: `
+      {date: '2014-2015', title: 'Ubisoft - IT-Dev Services', desc: `
 Programer Analyst
-- As part of IT-Dev - develop and maintain internal applications for the various internal services (hr/logistics/fincances/etc)
+- As part of IT-Dev, develop and maintain internal applications for the various internal services (hr/logistics/fincances/etc).
 - Analyse and understand internal customers business requirements
 - Work alongside other anylsts to design, code and test modiifcations to internal software
       `},
-      {date: '2011/2014', 
-       title: 'Ubisoft - Cost Control - Financial Analyst', 
+      {date: '2011-2014', 
+       title: 'Ubisoft - Projects Cost Control', 
        desc: `
 Financial Analyst
-- Design, implement and maintain
+- Design, implement and maintain:
   - Reports and finaacial planning tools used by the projects to prepare and follow their budgets.
-  - Local datawarehouses to better answer local needs
-- Follow the budget of various games projects
-  - Act as support and main point of contact for any financial subjec for the games porjects producer.
-  - Analyse and maintain budgets and forecasts.
-  - Setup initial bugets
+  - Local datawarehouses to better answer local needs. Improved responsiveness and quality of available data
+  - Toolchain used by the analyst team to setup, update, maintain and analyse budgets.
+- Follow and controt budgets of multiple game projects
+  - Act as support and main point of contact for the projects producer
+  - Setup initial bugets with the producer
+  - Analyse and maintain budgets and forecasts
 - Follow and analyse budgets for the headoffice.
   - Analyse and control costs for the headoffice
   - Prepare reports on the state of the budgets. 
 - Ensure proper financial information is shared between the projects productions team, local management and the headoffice.
-- Calculate the yearly SRED credits
+- Calculate the yearly SRED credits for the projects.
        `},
-      {date: '2006/2009', 
+      {date: '2006-2009', 
        title: 'Caisse Centrale Desjardins - Credit and integrated risk management sector' , 
        desc: 
 `Internship
-  Main jobs included 
-
-  - testing new reports being developed
-  - preparing daily, monthly and quarterly reports
-  - performing quarterly reconciliations at month and quarter end. 
+  - Testing new reports being developed
+  - Preparing daily, monthly and quarterly reports
+  - Performing quarterly reconciliations at month and quarter end. 
   - Automating some reports and jobs through excel templates and VBA
-  - performed some translation from French to English
+  - Performed some translation from French to English
   - Various other jobs to alleviate work load for the department and to perform essential services during other employee’s vacations.` 
 }]
-  },
-  Profile: {
-    title: 'About',
-  }
-
+},
 };
 
 window['dataSettings'] = {
@@ -795,11 +790,10 @@ window['components'] = {
     render: function() {
       let {name} = this.props;
       return (
-        <div className="bb bw1 mb3" >
+        <div className="bb bw1 mb3 b--light-silver" >
           <h1 className="f1 fw1 tracked tr mb0">{name}</h1>
         </div>
       );
-
     }
   }`,
   ContactList: `{
@@ -844,7 +838,7 @@ window['components'] = {
     render: function(){
       return (
         <div className="fl mb5 w-100">
-          <div className="dt">
+          <div className="dt mb3">
             <div className="dtc" style={{whiteSpace: "nowrap"}}>
               <h2 className="tl f3 fw5 mb2 mt0 fw1 tracked w-100"
                   >
@@ -867,7 +861,7 @@ window['components'] = {
         return <li key={i} className="mb2">{elem}</li>
       })
       return (
-        <ul className="list pa0 ma0 pb2 mb2 pl4">
+        <ul className="pa0 ma0 pb2 mb2 pl4">
           {listElems}
         </ul>
       )
@@ -887,16 +881,16 @@ window['components'] = {
 
       let listElems = _.map(elems, function(elem, i){
         return (
-          <li key={i} className="cf w-100 mb3">
-            <div className="fl w-10 tc b pr2">{elem.date}</div>
-            <div className="fl w-25 i pr4">{elem.title}</div>
-            <div className="fl w-50" dangerouslySetInnerHTML={ {__html: elem.desc}}></div>
+          <li key={i} className="cf w-100 mb4">
+            <div className="fl w-100-l w-20  b pr2 pb1">{elem.date}</div>
+            <div className="fl w-100-l w-20 i pr4 pb1">{elem.title}</div>
+            <div className="fl w-100-l w-60" dangerouslySetInnerHTML={ {__html: elem.desc}}></div>
           </li>
         )
       })
 
       return (
-        <ul className="cf w-100 list pa0 mb0 pl4">
+        <ul className="cf w-100 list pa0 mb0 pl4 mt0">
           {listElems}
         </ul>
       )
