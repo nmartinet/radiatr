@@ -60,6 +60,10 @@ Download the html. Start editing. Save changes.
     - everything isa container
     - components and setigns are special cases
       - laod a seting container for these containers first for spec methods etc (ie type f editro for component/how to register components etc..)
+  - get data to function
+  - save to fucntion
+  - view in settings
+  - container setting editor 
 
 - Find a way to have meta/props
   - shadow container - tied to the path if existing?
@@ -79,4 +83,11 @@ Download the html. Start editing. Save changes.
 - Dependencies 
   - For dev purposes the dependencies are local - save on reload time etc...
   - Change to be able to get forma CDN, inline them on export or downlad them for dev
+
+
+## Bugs
+  
+  - change how tabs work - creates/destroys content - wip gets lost
+  - changing doc root doesnt really refresh, needs reload.
+  
 

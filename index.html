@@ -97,7 +97,7 @@ window['dataSettings'] = {
 
 window['componentsSettings'] = {
   dataset: 'components',
-  functions: function() {
+  functions: `function() {
     var self = {};
     self.registerComponent =  function(component, name){
       var presets = { presets: ['es2015', 'react'] };
@@ -112,10 +112,9 @@ window['componentsSettings'] = {
     };
 
     return self;
-  }, 
+  }`, 
   hooks: {
     'onInit': 'registerComponents',
-    'onChange': 'registerComponent',
   },
   reactr:{
     editor: 'ComponentEditor',
@@ -134,9 +133,9 @@ window['components'] = {
         state.funcs[name] = ds.q;
         state[name] = ds.data;
         ds.q.registerCallback('onChange', function(data){
-          let newSate = {};
-          newState[name] = data
-          self.setState(newState);
+          var tmpState = {};
+          tmpState[name] = data;
+          self.setState(tmpState);
         })
       });
 
@@ -154,7 +153,7 @@ window['components'] = {
         let {name, editor} = ds.q.getInfo();
 
         return (
-          <div label={name}>
+          <div label={name} key={name}>
             {React.createElement(window[editor], {data: self.state[name], q: self.state.funcs[name], path: [], root:  self })}
           </div>
         );
@@ -162,16 +161,17 @@ window['components'] = {
 
       return (
         <div className="cf">
+
           <div className="fl w-50">
-            <CV data={data} />
+            <CV data={self.state.data} />
           </div>
+
           <div className="fl w-50 pa3">
             <h1 className="f1 tracked tr fw1 bb bw1 b--silver fw1">reactr</h1>
             <ReactrControls  ctrls={ctrls} data={self.state.data} />
             <Tabs selected="0">
               {dsEditors}
             </Tabs>
-            
           </div>
         </div>
       )
@@ -494,10 +494,6 @@ window['components'] = {
     }
   }`,
   ObjectEditor: `{
-    addArray: function(path, evnt){
-      console.log(path)
-      this.props.q.addArray(path);
-    },
     modKey: function(path, newVal, evnt){
       this.props.q.modKey(path, newVal);
       return newVal
@@ -532,15 +528,9 @@ window['components'] = {
         ),
       ];
 
-      if (dType == "Array") {
-        opts.push(
-          <a>Add entry</a>
-        )
-      };
-
-      let optsUI = _.map(opts, (opt) => {
+      let optsUI = _.map(opts, (opt, i) => {
         return (
-          <li>
+          <li key={i}>
             {opt}
           </li>
         )
@@ -675,9 +665,56 @@ window['components'] = {
     },
   }`,
   ArrayEditor: `{
+    addArray: function(path, evnt){
+      this.props.q.addArray(path);
+    },
+    deleteEntry: function(path, evnt){
+      if (window.confirm("Delete value?")) {
+        this.props.q.delKey(path);
+      };
+    },
+    changeEntryType: function(path, newType, evnt){
+      if (window.confirm("Change type? value will be deleted")){
+        this.props.q.changeType(path, newType)
+      };
+    },
+    moveEntry: function(path, newPos, evnt){
+      this.props.q.moveEntry(path, newPos);
+      this.setState({data: this.props.data});
+      console.log(this.state)
+    },
+    getInitialState: function(){
+      return {data: this.props.data};
+    },
     render: function(){
       var self = this;
-      let {data, q, path} = self.props;
+      let {data} = self.state
+      let {q, path} = self.props;
+
+      let opts = [
+        (<a onClick={self.addArray.bind(self, path)}>Add entry</a>),
+      ];
+
+      let optsUI = _.map(opts, (opt, i) => {
+        return (
+          <li key={i}>
+            {opt}
+          </li>
+        )
+      });
+
+      let propsButton = (
+        <div className="fl">
+          <ToggleMenu>
+            <div className="ba b--silver bg-white pa2 ma0">
+              <h3 className="mt0">Properties</h3>
+              <ul className="list pl0">
+                {optsUI}
+              </ul>
+            </div>
+          </ToggleMenu>
+        </div>
+      )
 
       var getRowClass = function(index){
         if(index%2==0){
@@ -693,25 +730,77 @@ window['components'] = {
         }
       }
 
+
       var itmList = _.map(data, function(val, index){
         var _path = path.concat(index);
         let {row, num} = getRowClass(index);
 
+        let dType = q.getType(_path);
+        let types = q.getTypes();
+        
+        let opts = [
+          (<a onClick={self.deleteEntry.bind(self, _path)}>Delete</a>),
+          (<div>
+            Data type: <Dropdown options={_.keys(types)} value={dType} onChange={self.changeEntryType.bind(self, _path)} />
+           </div>
+          ),
+          (<a onClick={self.moveEntry.bind(self, _path, (index-1))}>move up</a>),
+          (<a onClick={self.moveEntry.bind(self, _path, (index+1))}>move down</a>),
+        ];
+
+        let optsUI = _.map(opts, (opt, i) => {
+          return (
+            <li key={i}>
+              {opt}
+            </li>
+          )
+        });
+
+        let propsButton = (
+          <div className="fl">
+            <ToggleMenu>
+              <div className="ba b--silver bg-white pa2 ma0">
+                <h3 className="mt0">Properties</h3>
+                <ul className="list pl0">
+                  {optsUI}
+                </ul>
+              </div>
+            </ToggleMenu>
+          </div>
+        )
+
         return (
-          <div className="cf w-100 relative" key={index}>
-            <div className={"fl absolute w-auto f1 fw1 b ma1 " + num}>
-              {index}
-            </div>
-            <div className={"fl w-100 pa1 " + row}>
-              <DataEdit data={val} q={q} path={_path} />
+          <div className={"cf w-100 relative "  + row} key={index}>
+
+              <div className={"fl absolute w-auto f1 fw1 b ma1 " + num}>
+                {index}
+              </div>
+
+              <div className="cf mr3 relative pr3">
+                <div className="w-100 fr dib pl3">
+                  <div className="w-100">
+                    <DataEdit data={val} q={q} path={_path} />
+                  </div>
+                </div>
+
+              <div className="fl cf absolute">
+                {propsButton}
+              </div> 
             </div>
           </div>
         )
       });
 
       return (
-        <div className="ma1 ba bw1 b--silver">
-          {itmList}
+        <div className="cf mr3 relative pr3">
+          <div className="w-100 fr dib pl3">
+            <div className="ma1 ba bw1 b--silver w-100">
+              {itmList}
+            </div>
+          </div>
+          <div className="fl cf absolute">
+            {propsButton}
+          </div> 
         </div>
       )
 
@@ -726,6 +815,9 @@ window['components'] = {
       return {
         val: this.props.data || ""
       }
+    },
+    componentWillReceiveProps: function(props) {
+      this.setState({val: props.data})
     },
     render: function(){
       var types = _.keys(this.props.q.getTypes());
@@ -872,6 +964,8 @@ window['components'] = {
       let self = this;
       let {elems} = this.props;
 
+      
+      
       if (self.props.mdConverter) {
         elems = _.map(elems, function(elem){
           elem.desc = self.props.mdConverter.makeHtml(elem.desc);
@@ -903,7 +997,7 @@ window['config'] = {
   docRoot:      'CV',
   title:        'reactr',
   stylesheets:  ["css/tachyons.min.css",  
-                  "css/style.css", 
+                 "css/style.css", 
                 ],
   scripts:      [ "libs/jquery.js",
                   "libs/lodash.js",
@@ -914,6 +1008,7 @@ window['config'] = {
                   "libs/polyfill.min.js",
                   "libs/browser.min.js",
                   "libs/ace.js",
+                  "libs/showdown.min.js",
                 ],
   datasets:     ['dataSettings', 
                  'componentsSettings',
@@ -951,7 +1046,6 @@ window['config'] = {
     var name;
     var editor;
     var functions;
-    var editor;
     var callbacks = {
       'onInit':   [],
       'onChange': [],
@@ -1029,7 +1123,9 @@ window['config'] = {
       var value = newValue || types['Object'];
       var key = key
       doOn(path, function(d){
-        return _.extend(d, {[key.toString()]: value});
+        let newObj = _.clone(d);
+        newObj[key] = value
+        return newObj;
       })
     };
 
@@ -1060,6 +1156,29 @@ window['config'] = {
       })
     };
 
+    var moveEntry = function(path, newPos){
+      var arrayPath = path;
+      var curPos = path.pop();
+      var newPos = newPos;
+
+
+
+      doOn(arrayPath, function(d){
+        let arr = d;
+        while(curPos < 0) {
+          curPos += d.length;
+        }
+          
+        while(newPos < 0) {
+          newPos += d.length;
+        }
+        d.splice(newPos, 0, d.splice(curPos, 1)[0])
+        
+
+        return d;
+      });
+    }
+
     var getTypes = function(){
       return types
     };
@@ -1069,6 +1188,10 @@ window['config'] = {
         name: name,
         editor: editor,
       }
+    };
+
+    var getData = function(){
+      return data;
     }
    
   
@@ -1076,11 +1199,17 @@ window['config'] = {
       data      = window[settings.dataset];
       name      = settings.dataset;
       editor    = settings.reactr.editor;
-      if(settings.functions)
-        functions = settings.functions();
+      if(settings.functions){
+        var presets = { presets: ['es2015', 'react'] };
+        var compCode = "functions = " + settings.functions + "()";
+        compCode = Babel.transform(compCode, presets).code;
+
+        eval(compCode)
+      };        
 
       functions = _.merge(functions, {
         getInfo: getInfo,
+        getData: getData,
         doOn: doOn,
         readOn: readOn,
         updateValue: updateValue,
@@ -1091,6 +1220,7 @@ window['config'] = {
         modKey: modKey,
         delKey: delKey,
         addArray: addArray,
+        moveEntry: moveEntry,
         changeType: changeType,
       })
 
@@ -1117,6 +1247,39 @@ window['config'] = {
     var config;
     var datasets        = {};
     var ctrls           = {};
+
+    var pPrint = function(c){
+      var getType = function(v){
+        if ((typeof(v) === 'object') && !Array.isArray(v)) return 'Object';
+        if (Array.isArray(v)) return 'Array';
+        return 'Value';
+      }
+      let toTypeString = {
+        'Object': function(o){
+          let self = this;
+          let cnt = _(o)
+                      .map(function(v, k){
+                        return `"${k}":  ${self[getType(v)](v)}`
+                      })
+                      .reduce((a, b) => `${a}, \n ${b}`)
+          return `{${cnt}} `
+        },
+        'Array': function(o){
+          let self = this;
+          let cnt = _(o)
+                      .map(function(v){
+                        return `${self[getType(v)](v)}`
+                      })
+                      .reduce((a, b) => `${a}, \n ${b}`)
+          return `[${cnt}]`
+        },
+        'Value': function(o){
+          return `\`${o}\``
+        }
+      };
+
+      return toTypeString[getType(c)](c);
+    }
 
     var promptForSave = function(content){
       var el = document.createElement('a');
@@ -1161,7 +1324,7 @@ window['config'] = {
 
 
       let dsString = function(dataset){
-        let content = `window['${dataset.name}'] = ${JSON.stringify(dataset.data)} ;`;
+        let content = `window['${dataset.name}'] = ${pPrint(dataset.data)};`;
         return `<script id="${dataset.name}" type="text/babel">` + content + "</" + "script>"
       };
       let inlineData = _(datasets).map(dsString).reduce( (d, a) => `${d} \n ${a}` )                          
@@ -1184,25 +1347,33 @@ window['config'] = {
       `
 
       return  fileContent
-    }
+    };
 
     var saveToFile = function(){
-      let currConf = configContainer.data
+      let currConf = config;
 
+      let dataSets = _(currConf.datasets)
+                      .map(function(ds){
+                        let dsSettings = window[ds];
+                        let name = dsSettings.dataset;
+                        return [
+                          {name: ds, data: dsSettings}, 
+                          {name: name, data: datasets[name].q.getData()}
+                        ]
+                      })
+                      .flatten()
+                      .value();
+
+      dataSets.push({name: 'config', data: config});
 
 
       let fileContent = {
         title:        currConf.title,
         stylesheets:  currConf.stylesheets,
         scripts:      currConf.scripts,
-        //get data here
-        datasets:     [{name: 'config',     data: currConf},
-                       {name: 'data',       data: data.data},
-                       {name: 'components', data:components.data },
-                      ],
+        datasets:     dataSets,
                        
       }
-
       promptForSave(generateFile(fileContent))
     };
 
@@ -1238,9 +1409,9 @@ window['config'] = {
     }
 
     var saveStaticDoc = function(){
-      let currConf = configContainer.data;
+      let currConf = config
       let body = ReactDOMServer.renderToString(
-        React.createElement(window[currConf.docRoot], {data: data.data})
+        React.createElement(window[currConf.docRoot], {data: datasets.data.data})
       )
       
       let fileContent = {
