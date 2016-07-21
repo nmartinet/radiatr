@@ -1249,36 +1249,40 @@ window['config'] = {
     var ctrls           = {};
 
     var pPrint = function(c){
+      let i = "  ";
       var getType = function(v){
         if ((typeof(v) === 'object') && !Array.isArray(v)) return 'Object';
         if (Array.isArray(v)) return 'Array';
         return 'Value';
       }
       let toTypeString = {
-        'Object': function(o){
+        'Object': function(o, l){
           let self = this;
+
           let cnt = _(o)
                       .map(function(v, k){
-                        return `"${k}":  ${self[getType(v)](v)}`
+                        let lvl=l+1;
+                        return `${i.repeat(lvl)}"${k}":  ${self[getType(v)](v, lvl)}`
                       })
-                      .reduce((a, b) => `${a}, \n ${b}`)
-          return `{${cnt}} `
+                      .reduce((a, b) => `${a},\n${b}`)
+          return `{\n${cnt}\n${i.repeat(l)}} `
         },
-        'Array': function(o){
+        'Array': function(o, l){
           let self = this;
           let cnt = _(o)
                       .map(function(v){
-                        return `${self[getType(v)](v)}`
+                        let lvl = l+1
+                        return `${i.repeat(lvl)}${self[getType(v)](v, lvl)}`
                       })
-                      .reduce((a, b) => `${a}, \n ${b}`)
-          return `[${cnt}]`
+                      .reduce((a, b) => `${a},\n${b}`)
+          return `[\n${cnt}\n${i.repeat(l)}]`
         },
-        'Value': function(o){
+        'Value': function(o, l){
           return `\`${o}\``
         }
       };
 
-      return toTypeString[getType(c)](c);
+      return toTypeString[getType(c)](c, 0);
     }
 
     var promptForSave = function(content){
@@ -1301,6 +1305,7 @@ window['config'] = {
     }
 
     var generateFile = function(content){
+      let indent= "  ";
       //defaults
       let {
         title       = 'reactr',
@@ -1314,37 +1319,26 @@ window['config'] = {
 
       let cssImports = _(stylesheets)
                           .map((ss) => `<link rel="stylesheet" href="${ss}">`)
-                          .reduce((x, a) => `${x} \n        ${a}`);
+                          .reduce((x, a) => `${x}\n${a}`);
 
       //split closing tag - browser would interpret it as the closing tag of the 
       //current scirpt instead of a template
       let scriptImports = _(scripts)
                             .map((sf) => `<script src="${sf}">` + "</" + "script>")
-                            .reduce((x, a) => `${x} \n        ${a}`);
+                            .reduce((x, a) => `${x}\n${a}`);
 
 
       let dsString = function(dataset){
-        let content = `window['${dataset.name}'] = ${pPrint(dataset.data)};`;
-        return `<script id="${dataset.name}" type="text/babel">` + content + "</" + "script>"
+        let content = `window['${dataset.name}'] = \n${pPrint(dataset.data)};`;
+        return `<script id="${dataset.name}" type="text/babel">\n${content}\n` + "</" + "script>"
       };
-      let inlineData = _(datasets).map(dsString).reduce( (d, a) => `${d} \n ${a}` )                          
 
-      let fileContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>${title}</title>
-          ${meta}
-          ${cssImports}
-          ${scriptImports}
-        </head>
-        <body>
-          <div id="root"></div>
-          ${inlineData}
-          ${reactrCode}
-        </body>
-        </html>
-      `
+      let inlineData = _(datasets).map(dsString).reduce( (d, a) => `${d}\n${a}` )
+
+      let head = `<title>${title}</title>\n${meta}\n${cssImports}\n${scriptImports}`
+      let body = `<div id="root"></div>\n${inlineData}\n${reactrCode}`
+
+      let fileContent = `<!DOCTYPE html>\n<html>\n<head>\n${head}\n</head>\n<body>\n${body}\n</body>\n<\html>`
 
       return  fileContent
     };
@@ -1423,6 +1417,8 @@ window['config'] = {
       };
 
       promptForSave(generateStaticDoc(fileContent))
+      
+
     };
 
     var init = function(){
