@@ -18,7 +18,6 @@
 </head><body>
 
 <div id="root"></div>
-
 <script id="data" type="text/babel">
 
 window['data'] = {
@@ -88,14 +87,14 @@ Financial Analyst
 },
 };
 
-window['dataSettings'] = {
+window['data-settings'] = {
   dataset: 'data', 
   reactr:{
     editor: 'DataEdit'
   }
-}
+};
 
-window['componentsSettings'] = {
+window['components-settings'] = {
   dataset: 'components',
   functions: `function() {
     var self = {};
@@ -119,8 +118,7 @@ window['componentsSettings'] = {
   reactr:{
     editor: 'ComponentEditor',
   }
-}
-
+};
 
 window['components'] = {
   ReactrRoot: `{
@@ -229,6 +227,45 @@ window['components'] = {
           </div>
         </div>
       )
+    }
+  }`,
+  RawEdit: `{
+    save: function(){
+      let evaledCode;
+      this.props.q.updateValue([], this.editor.getValue());
+    },
+    setEditOptions: function(option){
+      this.editor.setOptions(option)
+    },
+    componentDidMount: function(){
+      this.editor = ace.edit('editor');
+      this.editor.setTheme("ace/theme/clouds");
+      this.editor.getSession().setMode("ace/mode/javascript");
+      this.editor.$blockScrolling = Infinity;
+      this.editor.setShowPrintMargin(false);
+      this.setEditOptions({
+        minLines: 25,
+        maxLines: 50,
+        fontSize: "14pt",
+      });
+      this.editor.setValue(pPrint(this.props.data))
+    },
+    render: function(){
+      var self = this;
+      let {data} = this.props;
+
+      return (
+        <div className="cf"> 
+          <div className="fl w-100">
+            <button className="btn" onClick={this.save}>
+              save
+            </button>
+          </div>
+          <div className="fl w-100" id="editor"> 
+          </div>
+        </div>
+      )
+
     }
   }`,
   ComponentEditor: `{
@@ -448,7 +485,6 @@ window['components'] = {
     onClick: function(indx, evnt){
       evnt.preventDefault();
       this.setState({selected: indx})
-
     },
     render: function(){
       var self = this;
@@ -467,8 +503,8 @@ window['components'] = {
       var content = self.props.children[self.state.selected];
 
       return (
-        <div className="nowrap overflow-x-auto">
-          <div className="bb bw1 b--silver mb2">
+        <div className="">
+          <div className="bb bw1 b--silver mb2 nowrap overflow-x-auto">
             {tabList}
           </div>
           <div className="pa3 pt1">
@@ -681,7 +717,6 @@ window['components'] = {
     moveEntry: function(path, newPos, evnt){
       this.props.q.moveEntry(path, newPos);
       this.setState({data: this.props.data});
-      console.log(this.state)
     },
     getInitialState: function(){
       return {data: this.props.data};
@@ -962,23 +997,19 @@ window['components'] = {
   ChronoList: `{
     render: function(){
       let self = this;
-      let {elems} = this.props;
-
-      
-      
-      if (self.props.mdConverter) {
-        elems = _.map(elems, function(elem){
-          elem.desc = self.props.mdConverter.makeHtml(elem.desc);
-          return elem;
-        })
-      }; 
+      let {elems, mdConverter} = this.props;
 
       let listElems = _.map(elems, function(elem, i){
         return (
           <li key={i} className="cf w-100 mb4">
             <div className="fl w-100-l w-20  b pr2 pb1">{elem.date}</div>
             <div className="fl w-100-l w-20 i pr4 pb1">{elem.title}</div>
-            <div className="fl w-100-l w-60" dangerouslySetInnerHTML={ {__html: elem.desc}}></div>
+            <div className="fl w-100-l w-60" >
+              {mdConverter
+                ? <MDBlock mdConverter={mdConverter} data={elem.desc} />
+                : elem.desc
+              }
+            </div>
           </li>
         )
       })
@@ -990,6 +1021,18 @@ window['components'] = {
       )
     }
   }`,
+  MDBlock:  `{
+    render: function(){
+      let self = this;
+      let {data, mdConverter} = this.props;
+
+      let rendered = mdConverter.makeHtml(data);
+            
+      return (
+        <div dangerouslySetInnerHTML={ {__html: rendered}}></div>
+      )
+    }
+  }`, 
 };
 
 window['config'] = {
@@ -1010,15 +1053,22 @@ window['config'] = {
                   "libs/ace.js",
                   "libs/showdown.min.js",
                 ],
-  datasets:     ['dataSettings', 
-                 'componentsSettings',
+  datasets:     ['data', 
+                 'components',
                  ],
-}
+};
 
 </script>
 
 
 <script id="reactr" type="text/babel">
+  var evalES6 = function(code){
+    var evaled;
+    eval(Babel.transform(("evaled = " + code), 
+                         {presets: ['es2015', 'react']}).code);
+    return evaled;
+  };
+
   var cn = function(){
     return _.chain(arguments)
             .flattenDeep()
@@ -1034,21 +1084,60 @@ window['config'] = {
               return d + " " + a;
             })
             .value()
-  }
+  };
 
   var ils = function(){
 
     return arguments
-  }
+  };
+
+  var pPrint = function(c){
+    let indent = (l) => "  ".repeat(l)
+    var getType = function(v){
+      if ((typeof(v) === 'object') && !Array.isArray(v)) return 'Object';
+      if (Array.isArray(v)) return 'Array';
+      return 'Value';
+    }
+    let toTypeString = {
+      'Object': function(o, l){
+        let self = this;
+        let cnt = _(o)
+                    .map(function(v, k){
+                      let lvl=l+1;
+                      return `${indent(lvl)}"${k}":  ${self[getType(v)](v, lvl)}`
+                    })
+                    .reduce((a, b) => `${a},\n${b}`)
+        return `{\n${cnt}\n${indent(l)}} `
+      },
+      'Array': function(o, l){
+        let self = this;
+        let cnt = _(o)
+                    .map(function(v){
+                      let lvl = l+1
+                      return `${indent(lvl)}${self[getType(v)](v, lvl)}`
+                    })
+                    .reduce((a, b) => `${a},\n${b}`)
+        return `[\n${cnt}\n${indent(l)}]`
+      },
+      'Value': function(o, l){
+        return `\`${o}\``
+      }
+    };
+
+    return _.isString(c) ? c : toTypeString[getType(c)](c, 0);
+  };
+
 
   var Container = function(settings){
     var data;
     var name;
     var editor;
     var functions;
+    var settings = settings;
     var callbacks = {
       'onInit':   [],
       'onChange': [],
+      'postUpdate': [],
     };
 
     var types = {
@@ -1057,6 +1146,19 @@ window['config'] = {
       'Value': '',
     };
 
+    var defaultSettings = {
+      dataset: 'data', 
+      reactr:{
+        editor: 'RawEdit',
+        getData: function(dataset){
+          return window[dataset]
+        },
+        saveData: function(ds){
+          let content = `window['${ds.q.getSettings().dataset}'] = \n${pPrint(ds.q.getData())};`;
+          return `<script id="${ds.q.getSettings().dataset}" type="text/babel">\n${content}\n` + "</" + "script>"
+        },
+      }
+    };
 
     var registerCallback = function(evnt, cb){
       if(!_.has(callbacks, evnt)) callbacks[evnt] = [];
@@ -1081,6 +1183,15 @@ window['config'] = {
         return data
       }
       data = _doOn(data, path, cb);
+
+      if(_.has(callbacks, 'postUpdate')){
+        if (callbacks['postUpdate'].length > 0) {
+          _.forEach(callbacks['postUpdate'], function(cb){
+            data = cb(data);
+          });
+        };
+      };
+
       trigger('onChange', data)
     };
 
@@ -1161,8 +1272,6 @@ window['config'] = {
       var curPos = path.pop();
       var newPos = newPos;
 
-
-
       doOn(arrayPath, function(d){
         let arr = d;
         while(curPos < 0) {
@@ -1177,9 +1286,10 @@ window['config'] = {
 
         return d;
       });
-    }
+    };
 
     var getTypes = function(){
+
       return types
     };
 
@@ -1191,12 +1301,31 @@ window['config'] = {
     };
 
     var getData = function(){
+
       return data;
+    }
+
+    var getSettings = function(){
+      return settings;
+    };
+
+    var saveDataset = function(ds){
+      let tmpSettings = _.merge({}, defaultSettings, settings);
+      return tmpSettings.reactr.saveData(ds); 
     }
    
   
     var init = function(settings){
-      data      = window[settings.dataset];
+      if (_.isString(settings)){
+        let tmpSettings = defaultSettings;
+        tmpSettings.dataset = settings;
+        settings = tmpSettings;
+      }
+
+      let tmpSettings = _.cloneDeep(defaultSettings);
+      tmpSettings = _.merge(defaultSettings, settings);
+
+      data      = tmpSettings.reactr.getData(settings.dataset);
       name      = settings.dataset;
       editor    = settings.reactr.editor;
       if(settings.functions){
@@ -1222,6 +1351,8 @@ window['config'] = {
         addArray: addArray,
         moveEntry: moveEntry,
         changeType: changeType,
+        getSettings: getSettings,
+        saveDataset: saveDataset,
       })
 
       if( _.has(settings, 'hooks')){
@@ -1242,48 +1373,51 @@ window['config'] = {
     }
   };
 
+  var reactrCodeContainerSettings = {
+    dataset: 'reactr',
+    reactr: {
+      editor: 'RawEdit',
+      getData: function(ds){
+        return $('html').find('#reactr').html();
+      },
+      saveData: function(ds){
+        return `<script id="reactr" type="text/babel">` + ds.q.getData() + "</" + "script>";
+      },
+    }
+  };
+
+  var evaledContainerSettings = {
+    functions: `function() {
+      var self = {};
+
+      self.evalUpdate = function(data){
+        return evalES6(data);
+      };
+
+      return self;
+    }`, 
+    hooks: {
+      'postUpdate': 'evalUpdate'
+    },
+    reactr: {
+      editor: 'RawEdit',
+    }
+  };
+
+  var configContainerSettings = {
+    reactr: {
+      saveData: function(ds){
+
+      }
+    },
+  };
+
   var Reactr = function(){
-    var self        = this;
+    var self            = this;
     var config;
     var datasets        = {};
     var ctrls           = {};
 
-    var pPrint = function(c){
-      let i = "  ";
-      var getType = function(v){
-        if ((typeof(v) === 'object') && !Array.isArray(v)) return 'Object';
-        if (Array.isArray(v)) return 'Array';
-        return 'Value';
-      }
-      let toTypeString = {
-        'Object': function(o, l){
-          let self = this;
-
-          let cnt = _(o)
-                      .map(function(v, k){
-                        let lvl=l+1;
-                        return `${i.repeat(lvl)}"${k}":  ${self[getType(v)](v, lvl)}`
-                      })
-                      .reduce((a, b) => `${a},\n${b}`)
-          return `{\n${cnt}\n${i.repeat(l)}} `
-        },
-        'Array': function(o, l){
-          let self = this;
-          let cnt = _(o)
-                      .map(function(v){
-                        let lvl = l+1
-                        return `${i.repeat(lvl)}${self[getType(v)](v, lvl)}`
-                      })
-                      .reduce((a, b) => `${a},\n${b}`)
-          return `[\n${cnt}\n${i.repeat(l)}]`
-        },
-        'Value': function(o, l){
-          return `\`${o}\``
-        }
-      };
-
-      return toTypeString[getType(c)](c, 0);
-    }
 
     var promptForSave = function(content){
       var el = document.createElement('a');
@@ -1315,8 +1449,6 @@ window['config'] = {
         datasets    = [], 
       } = content;
 
-      let reactrCode = `<script id="reactr" type="text/babel">` + getReactrCode() + "</" + "script>";
-
       let cssImports = _(stylesheets)
                           .map((ss) => `<link rel="stylesheet" href="${ss}">`)
                           .reduce((x, a) => `${x}\n${a}`);
@@ -1327,16 +1459,14 @@ window['config'] = {
                             .map((sf) => `<script src="${sf}">` + "</" + "script>")
                             .reduce((x, a) => `${x}\n${a}`);
 
-
-      let dsString = function(dataset){
-        let content = `window['${dataset.name}'] = \n${pPrint(dataset.data)};`;
-        return `<script id="${dataset.name}" type="text/babel">\n${content}\n` + "</" + "script>"
-      };
-
-      let inlineData = _(datasets).map(dsString).reduce( (d, a) => `${d}\n${a}` )
+      let inlineData = _(datasets)
+                          .map(function(ds){
+                            return ds.q.saveDataset(ds);
+                          })
+                          .reduce( (d, a) => `${d}\n${a}` )
 
       let head = `<title>${title}</title>\n${meta}\n${cssImports}\n${scriptImports}`
-      let body = `<div id="root"></div>\n${inlineData}\n${reactrCode}`
+      let body = `<div id="root"></div>\n${inlineData}\n$`
 
       let fileContent = `<!DOCTYPE html>\n<html>\n<head>\n${head}\n</head>\n<body>\n${body}\n</body>\n<\html>`
 
@@ -1344,28 +1474,13 @@ window['config'] = {
     };
 
     var saveToFile = function(){
-      let currConf = config;
-
-      let dataSets = _(currConf.datasets)
-                      .map(function(ds){
-                        let dsSettings = window[ds];
-                        let name = dsSettings.dataset;
-                        return [
-                          {name: ds, data: dsSettings}, 
-                          {name: name, data: datasets[name].q.getData()}
-                        ]
-                      })
-                      .flatten()
-                      .value();
-
-      dataSets.push({name: 'config', data: config});
-
+      let currConf = datasets['config'].q.getData();
 
       let fileContent = {
         title:        currConf.title,
         stylesheets:  currConf.stylesheets,
         scripts:      currConf.scripts,
-        datasets:     dataSets,
+        datasets:     datasets,
                        
       }
       promptForSave(generateFile(fileContent))
@@ -1417,17 +1532,24 @@ window['config'] = {
       };
 
       promptForSave(generateStaticDoc(fileContent))
-      
-
     };
 
     var init = function(){
       config = window["config"];
       _(config.datasets)
         .forEach(function(ds){
-          let dsSettings = window[ds];
-          datasets[dsSettings.dataset] = Container(dsSettings);
+          let settingsName = `${ds}-settings`
+          if(_.has(window, settingsName)){
+            let dsSettings = window[settingsName];
+            datasets[settingsName] = Container( _.merge({}, evaledContainerSettings, {'dataset':  settingsName}))
+            datasets[ds] = Container(dsSettings);
+          } else {
+            datasets[ds] = Container(ds);
+          }
         });
+
+      datasets['config'] = Container( _.merge({}, evaledContainerSettings, {'dataset':  'config'}))
+      datasets['reactr'] = Container(reactrCodeContainerSettings);
     };
 
     init();
@@ -1455,7 +1577,6 @@ window['config'] = {
   var reactr = Reactr();
 
   reactr.run();
-
 </script>
 
 
