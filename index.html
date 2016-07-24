@@ -1042,7 +1042,7 @@ window['config'] = {
   stylesheets:  ["css/tachyons.min.css",  
                  "css/style.css", 
                 ],
-  scriptsLocal:      [ "libs/jquery.js",
+  scriptsLocal: [ "libs/jquery.js",
                   "libs/lodash.js",
                   "libs/react.js",
                   "libs/react-dom.js",
@@ -1053,7 +1053,7 @@ window['config'] = {
                   "libs/ace.js",
                   "libs/showdown.min.js",
                 ],
-  scripts:   [ "https://cdn.jsdelivr.net/jquery/3.1.0/jquery.min.js",
+  scripts:      [ "https://cdn.jsdelivr.net/jquery/3.1.0/jquery.min.js",
                   "https://cdn.jsdelivr.net/lodash/4.13.1/lodash.min.js",
                   "https://cdn.jsdelivr.net/react/15.2.1/react.min.js",
                   "https://cdn.jsdelivr.net/react/15.2.1/react-dom.min.js",
@@ -1166,7 +1166,7 @@ window['config'] = {
         },
         saveData: function(ds){
           let content = `window['${ds.q.getSettings().dataset}'] = \n${pPrint(ds.q.getData())};`;
-          return `<script id="${ds.q.getSettings().dataset}" type="text/babel">\n${content}\n` + "</" + "script>"
+          return {body: [`<script id="${ds.q.getSettings().dataset}" type="text/babel">\n${content}\n` + "</" + "script>"]}
         },
       }
     };
@@ -1392,7 +1392,7 @@ window['config'] = {
         return $('html').find('#reactr').html();
       },
       saveData: function(ds){
-        return `<script id="reactr" type="text/babel">` + ds.q.getData() + "</" + "script>";
+        return {body: [`<script id="reactr" type="text/babel">` + ds.q.getData() + "</" + "script>"]};
       },
     }
   };
@@ -1416,8 +1416,21 @@ window['config'] = {
   };
 
   var configContainerSettings = {
+    'dataset': 'config',
     reactr: {
       saveData: function(ds){
+        let data = ds.q.getData();
+        let cssImports = _.map(data.stylesheets, (ss) => `<link rel="stylesheet" href="${ss}">`)
+        let scriptImports = _.map(data.scripts, (sf) => `<script src="${sf}">` + "</" + "script>")
+
+        let content = `window['${ds.q.getSettings().dataset}'] = \n${pPrint(ds.q.getData())};`;
+        let bodyContent = `<script id="${ds.q.getSettings().dataset}" type="text/babel">\n${content}\n` + "</" + "script>";
+
+        return {
+          css: cssImports,
+          scripts: scriptImports,
+          body: [bodyContent],
+        }
 
       }
     },
@@ -1444,42 +1457,38 @@ window['config'] = {
       document.body.removeChild(el);
     };
 
-    var getReactrCode = function(){
-
-      return $('html').find('#reactr').html();
-    }
-
     var generateFile = function(content){
       let indent= "  ";
       //defaults
       let {
         title       = 'reactr',
         meta        = `<meta charset="utf-8" />`,
-        stylesheets = [],
-        scripts     = [],
         datasets    = [], 
       } = content;
 
-      let cssImports = _(stylesheets)
-                          .map((ss) => `<link rel="stylesheet" href="${ss}">`)
-                          .reduce((x, a) => `${x}\n${a}`);
+      var body    = [], 
+          css     = [], 
+          scripts = [];
+     
+      let tmp =  _(datasets)
+                    .map(function(ds){
+                      return ds.q.saveDataset(ds);
+                    }).value()
 
-      //split closing tag - browser would interpret it as the closing tag of the 
-      //current scirpt instead of a template
-      let scriptImports = _(scripts)
-                            .map((sf) => `<script src="${sf}">` + "</" + "script>")
-                            .reduce((x, a) => `${x}\n${a}`);
+      _.forEach(tmp, function(v){
+        if(_.has(v, "body"))    body = body.concat(v["body"])
+        if(_.has(v, "css"))     css = css.concat(v["css"])
+        if(_.has(v, "scripts"))  scripts = scripts.concat(v["scripts"])
+      })
 
-      let inlineData = _(datasets)
-                          .map(function(ds){
-                            return ds.q.saveDataset(ds);
-                          })
-                          .reduce( (d, a) => `${d}\n${a}` )
+      body = _.reduce(body, (x, y) => `${x}\n${y}`)
+      css = _.reduce(css, (x, y) => `${x}\n${y}`)
+      scripts = _.reduce(scripts, (x, y) => `${x}\n${y}`)
+      
+      let head = `<title>${title}</title>\n${meta}\n${css}\n${scripts}`
+      let bodyContent = `<div id="root"></div>\n${body}\n$`
 
-      let head = `<title>${title}</title>\n${meta}\n${cssImports}\n${scriptImports}`
-      let body = `<div id="root"></div>\n${inlineData}\n$`
-
-      let fileContent = `<!DOCTYPE html>\n<html>\n<head>\n${head}\n</head>\n<body>\n${body}\n</body>\n<\html>`
+      let fileContent = `<!DOCTYPE html>\n<html>\n<head>\n${head}\n</head>\n<body>\n${bodyContent}\n</body>\n<\html>`
 
       return  fileContent
     };
@@ -1559,7 +1568,7 @@ window['config'] = {
           }
         });
 
-      datasets['config'] = Container( _.merge({}, evaledContainerSettings, {'dataset':  'config'}))
+      datasets['config'] = Container( _.merge({}, evaledContainerSettings, configContainerSettings))
       datasets['reactr'] = Container(reactrCodeContainerSettings);
     };
 
