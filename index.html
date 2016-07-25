@@ -1806,12 +1806,14 @@ window['app-css'] =
       })
     };
 
-    var addArray = function(path){
+    var addArray = function(path, newValue){
+      let val = newValue || "";
       doOn(path, function(d){
-        d.push("")
+        d.push(val);
         return d;
       })
     };
+
 
     var moveEntry = function(path, newPos){
       var arrayPath = path;
