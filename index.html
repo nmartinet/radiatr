@@ -382,7 +382,6 @@ window['components'] =
     },
     render: function(){
       let {datasets} = this.state;
-      let {ctrls} = this.props;
       let self = this;
 
       let dsEditors = _.map(this.props.datasets, function(ds){
@@ -404,7 +403,7 @@ window['components'] =
 
           <div className="fl w-50 pa3">
             <h1 className="f1 tracked tr fw1 bb bw1 b--silver fw1">reactr</h1>
-            <ReactrControls  ctrls={ctrls} data={self.state.data} />
+            <ReactrControls data={self.state.data} />
             <Tabs selected="0">
               {dsEditors}
             </Tabs>
@@ -697,10 +696,10 @@ window['components'] =
   }`,
   "ReactrControls":  `{
     onSave: function(e){
-      this.props.ctrls.saveToFile();
+      saveToFile()
     },
     onSaveStatic: function(e){
-      this.props.ctrls.saveStaticDoc();
+      saveStaticDoc();
     },
     pData: function(){
       console.log(this.props.data)
@@ -1481,6 +1480,8 @@ window['app-css'] =
 `;
 </script>
 <script id="reactr" type="text/babel">
+  var reactr;
+  
   var evalES6 = function(code){
     var evaled;
     eval(Babel.transform(("evaled = " + code), 
@@ -1495,7 +1496,120 @@ window['app-css'] =
         css: ["<style type='text/css' id='" + ds.q.getSettings().dataset + "'>" + pPrint(ds.q.getData()) + "</style>"], 
         body: ['<script type="text/babel">\n' + content + "\n" + "</" + "script>"]
       }
+  };
+
+  var promptForSave = function(content){
+    var el = document.createElement('a');
+    el.setAttribute('href', 
+                    'data:text/plain;charset=utf-8,' 
+                    + encodeURIComponent(content));
+    
+    el.setAttribute('download', 'index.html');
+    el.style.display = 'none';
+
+    document.body.appendChild(el);
+    el.click();
+    document.body.removeChild(el);
+  };
+
+  var generateFile = function(content){
+    let indent= "  ";
+    //defaults
+    let {
+      title       = 'reactr',
+      meta        = `<meta charset="utf-8" />`,
+      datasets    = [], 
+    } = content;
+
+    var body    = [], 
+        css     = [], 
+        scripts = [];
+   
+    let tmp =  _(datasets)
+                  .map(function(ds){
+                    return ds.q.saveDataset(ds);
+                  }).value()
+
+    _.forEach(tmp, function(v){
+      if(_.has(v, "body"))    body = body.concat(v["body"])
+      if(_.has(v, "css"))     css = css.concat(v["css"])
+      if(_.has(v, "scripts"))  scripts = scripts.concat(v["scripts"])
+    })
+
+    body =    _.reduce(body, (x, y) => `${x}\n${y}`)
+    css =     _.reduce(css, (x, y) => `${x}\n${y}`)
+    scripts = _.reduce(scripts, (x, y) => `${x}\n${y}`)
+    
+    let head = `<title>${title}</title>\n${meta}\n${css}\n${scripts}`
+    let bodyContent = `<div id="root"></div>\n${body}\n`
+
+    let fileContent = `<!DOCTYPE html>\n<html>\n<head>\n${head}\n</head>\n<body>\n${bodyContent}\n</body>\n<\html>`
+
+    return  fileContent
+  };
+
+  var saveToFile = function(){
+    let datasets = reactr.getDatasets()
+    let currConf = datasets['config'].q.getData();
+
+    let fileContent = {
+      title:        currConf.title,
+      stylesheets:  currConf.stylesheets,
+      scripts:      currConf.scripts,
+      datasets:     datasets,
+                     
     }
+    promptForSave(generateFile(fileContent))
+  };
+
+  var generateStaticDoc = function(content){
+    //defaults
+    let {
+      title       = 'reactr',
+      meta        = `<meta charset="utf-8" />`,
+      stylesheets = [],
+      body        = ""
+    } = content;
+
+    let cssImports = _(stylesheets)
+                        .map((ss) => `<link rel="stylesheet" href="${ss}">`)
+                        .reduce((x, a) => `${x} \n        ${a}`);
+
+
+    let fileContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${title}</title>
+        ${meta}
+        ${cssImports}
+      </head>
+      <body>
+        ${body}
+      </body>
+      </html>
+    `
+
+    return  fileContent
+  }
+
+  var saveStaticDoc = function(){
+    let datasets = reactr.getDatasets()
+    let currConf = datasets['config'].q.getData();
+    let body = ReactDOMServer.renderToString(
+      React.createElement(window[currConf.docRoot], {data: datasets.data.data})
+    )
+    
+    let fileContent = {
+      title:        currConf.title,
+      title:        currConf.title,
+      stylesheets:  currConf.stylesheets,
+      body:         body
+
+    };
+
+    promptForSave(generateStaticDoc(fileContent))
+  };
 
   var cn = function(){
     return _.chain(arguments)
@@ -1556,9 +1670,9 @@ window['app-css'] =
   };
 
   var wrapTemplate = function(v){
-    return `\`${v}\``
-  }
 
+    return `\`${v}\``
+  };
 
   var Container = function(settings){
     var data;
@@ -1865,118 +1979,19 @@ window['app-css'] =
     var self            = this;
     var config;
     var datasets        = {};
-    var ctrls           = {};
 
-
-    var promptForSave = function(content){
-      var el = document.createElement('a');
-      el.setAttribute('href', 
-                      'data:text/plain;charset=utf-8,' 
-                      + encodeURIComponent(content));
-      
-      el.setAttribute('download', 'index.html');
-      el.style.display = 'none';
-
-      document.body.appendChild(el);
-      el.click();
-      document.body.removeChild(el);
+    var getDatasets = function(){
+      return datasets;
     };
 
-    var generateFile = function(content){
-      let indent= "  ";
-      //defaults
-      let {
-        title       = 'reactr',
-        meta        = `<meta charset="utf-8" />`,
-        datasets    = [], 
-      } = content;
 
-      var body    = [], 
-          css     = [], 
-          scripts = [];
-     
-      let tmp =  _(datasets)
-                    .map(function(ds){
-                      return ds.q.saveDataset(ds);
-                    }).value()
+    var run = function(){
+      const rootElement = document.getElementById(config.elem)
 
-      _.forEach(tmp, function(v){
-        if(_.has(v, "body"))    body = body.concat(v["body"])
-        if(_.has(v, "css"))     css = css.concat(v["css"])
-        if(_.has(v, "scripts"))  scripts = scripts.concat(v["scripts"])
-      })
-
-      body =    _.reduce(body, (x, y) => `${x}\n${y}`)
-      css =     _.reduce(css, (x, y) => `${x}\n${y}`)
-      scripts = _.reduce(scripts, (x, y) => `${x}\n${y}`)
-      
-      let head = `<title>${title}</title>\n${meta}\n${css}\n${scripts}`
-      let bodyContent = `<div id="root"></div>\n${body}\n`
-
-      let fileContent = `<!DOCTYPE html>\n<html>\n<head>\n${head}\n</head>\n<body>\n${bodyContent}\n</body>\n<\html>`
-
-      return  fileContent
-    };
-
-    var saveToFile = function(){
-      let currConf = datasets['config'].q.getData();
-
-      let fileContent = {
-        title:        currConf.title,
-        stylesheets:  currConf.stylesheets,
-        scripts:      currConf.scripts,
-        datasets:     datasets,
-                       
-      }
-      promptForSave(generateFile(fileContent))
-    };
-
-    var generateStaticDoc = function(content){
-      //defaults
-      let {
-        title       = 'reactr',
-        meta        = `<meta charset="utf-8" />`,
-        stylesheets = [],
-        body        = ""
-      } = content;
-
-      let cssImports = _(stylesheets)
-                          .map((ss) => `<link rel="stylesheet" href="${ss}">`)
-                          .reduce((x, a) => `${x} \n        ${a}`);
-
-
-      let fileContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>${title}</title>
-          ${meta}
-          ${cssImports}
-        </head>
-        <body>
-          ${body}
-        </body>
-        </html>
-      `
-
-      return  fileContent
-    }
-
-    var saveStaticDoc = function(){
-      let currConf = config
-      let body = ReactDOMServer.renderToString(
-        React.createElement(window[currConf.docRoot], {data: datasets.data.data})
-      )
-      
-      let fileContent = {
-        title:        currConf.title,
-        title:        currConf.title,
-        stylesheets:  currConf.stylesheets,
-        body:         body
-
-      };
-
-      promptForSave(generateStaticDoc(fileContent))
+      ReactDOM.render(
+        <ReactrRoot datasets={datasets} />,
+        rootElement
+      );
     };
 
     var init = function(){
@@ -1998,33 +2013,18 @@ window['app-css'] =
         });
 
       datasets['reactr'] = Container(reactrCodeContainerSettings);
-
     };
 
     init();
 
-    ctrls = {
-      saveToFile: saveToFile,
-      saveStaticDoc: saveStaticDoc,
-    }
-
-    var run = function(){
-      const rootElement = document.getElementById(config.elem)
-
-      ReactDOM.render(
-        <ReactrRoot datasets={datasets} ctrls={ctrls} />,
-        rootElement
-      );
-    };
-
     return {
       run: run,
+      getDatasets: getDatasets,
     }
 
   }
 
-  var reactr = Reactr();
-
+  reactr = Reactr();
   reactr.run();
 </script>
 
