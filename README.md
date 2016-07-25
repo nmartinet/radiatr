@@ -26,19 +26,14 @@ Download the html. Start editing. Save changes.
 ## Todo
 
 - Clean up styles
-  - fix data editor - options//save
-  - setup options list
   - dragable splitters
 
 - Data Editor
-  - Delete Array
-  - Reorder Array
   - show pros pencil on hover/focus
   - value editor -- if long text change to textarea
   - array list - bg number too big when single line - 
-  - array editor - per entry props/editor
-  - array editor - for single line bg number a bit much
-  - add kb shortucts 
+  - add kb shortucts -- enter for save
+  
 
 
 - Component Editor
@@ -89,5 +84,5 @@ Download the html. Start editing. Save changes.
   
   - change how tabs work - creates/destroys content - wip gets lost
   - changing doc root doesnt really refresh, needs reload.
-  
+
 
