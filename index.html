@@ -1,63 +1,302 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>reactr</title>
-  <meta charset="utf-8" />
-  <link rel="stylesheet" href="css/tachyons.min.css">
-  <link rel="stylesheet" href="css/style.css">
-  <script src="libs/jquery.js"></script>
-  <script src="libs/lodash.js"></script>
-  <script src="libs/react.js"></script>
-  <script src="libs/react-dom.js"></script>
-  <script src="libs/react-dom-server.min.js"></script>
-  <script src="libs/babel.min.js"></script>
-  <script src="libs/polyfill.min.js"></script>
-  <script src="libs/browser.min.js"></script>
-  <script src="libs/ace.js"></script>
-  <script src="libs/showdown.min.js"></script>
-</head><body>
+<title>reactr</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tachyons/4.0.2/tachyons.min.css">
+<style type='text/css' id='app-css'>
+  .btn,
+  .btn:link,
+  .btn:visited {
+    border-style: solid;
+    border-width: 1px;
+    color: #111;
+    display: inline-block;
+    letter-spacing: .15em;
+    margin-bottom: .5em;
+    padding: 0.25em 1em;
+    text-decoration: none;
+    -webkit-transition: color .4s, background-color .4s, border .4s;
+            transition: color .4s, background-color .4s, border .4s;
+  }
 
+  .btn:hover {
+    color: #000;
+    border: 1px solid #000;
+    -webkit-transition: background-color .3s, color .3s, border .3s;
+            transition: background-color .3s, color .3s, border .3s;
+  }
+
+  .btn:active {
+    color: #000;
+    border: 1px solid #000;
+    -webkit-transition: background-color .3s, color .3s, border .3s;
+            transition: background-color .3s, color .3s, border .3s;
+  }
+
+
+  .inpt{
+    margin:3px;
+    border:0;
+    padding:2px;
+    display:inline-block;
+    vertical-align:middle;
+    white-space:normal;
+    background:none;
+    line-height:1;
+    border-bottom: 1px solid #aaa;
+    font-family:Arial;
+  }
+
+  .inpt:focus {
+    outline:0;
+    border-bottom: 1px solid #555;
+  }
+
+  .static { position: static; }
+  .relative { position: relative; }
+  .absolute { position: absolute; }
+  .fixed { position: fixed; }
+  @media screen and (min-width: 48em) {
+   .static-ns { position: static; }
+   .relative-ns { position: relative; }
+   .absolute-ns { position: absolute; }
+   .fixed-ns { position: fixed; }
+  }
+  @media screen and (min-width: 48em) and (max-width: 64em) {
+   .static-m { position: static; }
+   .relative-m { position: relative; }
+   .absolute-m { position: absolute; }
+   .fixed-m { position: fixed; }
+  }
+  @media screen and (min-width: 64em) {
+   .static-l { position: static; }
+   .relative-l { position: relative; }
+   .absolute-l { position: absolute; }
+   .fixed-l { position: fixed; }
+  }
+
+  .f7 {
+    font-size: .75rem;
+  }
+
+  .f8 {
+    font-size: .70rem;
+  }
+
+
+  .no-display {
+    display: none;
+  }
+
+
+
+  .menu{
+    text-align: left;
+    display: inline;
+    margin: 0;
+    padding: 15px 4px 17px 0;
+    list-style: none;
+    -webkit-box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+    -moz-box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+    font: bold 12px/18px sans-serif;
+    display: inline-block;
+    margin-right: -4px;
+    position: relative;
+    padding: 15px 20px;
+    background: #fff;
+    cursor: pointer;
+    -webkit-transition: all 0.2s;
+    -moz-transition: all 0.2s;
+    -ms-transition: all 0.2s;
+    -o-transition: all 0.2s;
+    transition: all 0.2s;
+  }
+
+  .menu:hover {
+    background: #555;
+    color: #fff;
+  }
+
+  .menu ul {
+      padding: 0;
+    position: absolute;
+
+    left: 0;
+    width: 150px;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+    -webkit-transiton: opacity 0.2s;
+    -moz-transition: opacity 0.2s;
+    -ms-transition: opacity 0.2s;
+    -o-transition: opacity 0.2s;
+    -transition: opacity 0.2s;
+    
+  }
+  .menu ul li { 
+    background: #555; 
+    display: block; 
+    color: #fff;
+    text-shadow: 0 -1px 0 #000;
+  }
+  .menu ul li:hover { background: #666; }
+  .menu:hover ul {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .hlayer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.2);
+  }
+
+
+  /* https://github.com/tachyons-css/tachyons-z-index */
+  .z-0 { z-index: 0; }
+  .z-1 { z-index: 1; }
+  .z-2 { z-index: 2; }
+  .z-3 { z-index: 3; }
+  .z-4 { z-index: 4; }
+  .z-5 { z-index: 5; }
+  .z-999 { z-index: 999; }
+  .z-9999 { z-index: 9999; }
+  .z-max { z-index: 2147483647; }
+  .z-inherit { z-index: inherit; }
+  .z-initial { z-index: initial; }
+  .z-unset { z-index: unset; }
+</style>
+<script src="https://cdn.jsdelivr.net/jquery/3.1.0/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/lodash/4.13.1/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/react/15.2.1/react.min.js"></script>
+<script src="https://cdn.jsdelivr.net/react/15.2.1/react-dom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/react/15.2.1/react-dom-server.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.10.3/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.9.1/polyfill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/babel/6.0.16/browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js"></script>
+<script src="https://cdn.jsdelivr.net/showdown/1.4.2/showdown.min.js"></script>
+</head>
+<body>
 <div id="root"></div>
-<script id="data" type="text/babel">
-
-window['data'] = {
-  name: "Nicolas Martinet",
-  contact: [
-    {name: "email",  val: "nicolas.martinet@gmail.com"},
-    {name: "telephone", val: "123-456-7890"},
-    {name: "website", val: "nmartinet.github.io"}
+<script id="config" type="text/babel">
+window['config'] = 
+{
+  "elem":  `root`,
+  "docRoot":  `CV`,
+  "title":  `reactr`,
+  "stylesheets":  [
+    `https://cdnjs.cloudflare.com/ajax/libs/tachyons/4.0.2/tachyons.min.css`
   ],
-  skills: {
-    title: "Skills",
-    content: [
-      'excel, vba',
-      'html, js, css',
-      'c#, ruby, python',
-      'sql',
-      'French and English',
+  "scriptsLocal":  [
+    `libs/jquery.js`,
+    `libs/lodash.js`,
+    `libs/react.js`,
+    `libs/react-dom.js`,
+    `libs/react-dom-server.min.js`,
+    `libs/babel.min.js`,
+    `libs/polyfill.min.js`,
+    `libs/browser.min.js`,
+    `libs/ace.js`,
+    `libs/showdown.min.js`
+  ],
+  "scripts":  [
+    `https://cdn.jsdelivr.net/jquery/3.1.0/jquery.min.js`,
+    `https://cdn.jsdelivr.net/lodash/4.13.1/lodash.min.js`,
+    `https://cdn.jsdelivr.net/react/15.2.1/react.min.js`,
+    `https://cdn.jsdelivr.net/react/15.2.1/react-dom.min.js`,
+    `https://cdn.jsdelivr.net/react/15.2.1/react-dom-server.min.js`,
+    `https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.10.3/babel.min.js`,
+    `https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.9.1/polyfill.min.js`,
+    `https://cdn.jsdelivr.net/babel/6.0.16/browser.min.js`,
+    `https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js`,
+    `https://cdn.jsdelivr.net/showdown/1.4.2/showdown.min.js`
+  ],
+  "datasets":  [
+    `data`,
+    `components`,
+    `app-css`
+  ]
+} ;
+</script>
+<script id="data-settings" type="text/babel">
+window['data-settings'] = 
+{
+  "dataset":  `data`,
+  "reactr":  {
+    "editor":  `DataEdit`
+  } 
+} ;
+</script>
+<script id="data" type="text/babel">
+window['data'] = 
+{
+  "name":  `Nicolas Martinet`,
+  "contact":  [
+    {
+      "name":  `email`,
+      "val":  `nicolas.martinet@gmail.com`
+    } ,
+    {
+      "name":  `telephone`,
+      "val":  `123-456-7890`
+    } ,
+    {
+      "name":  `website`,
+      "val":  `nmartinet.github.io`
+    } 
+  ],
+  "skills":  {
+    "title":  `Skills`,
+    "content":  [
+      `excel, vba`,
+      `html, js, css`,
+      `c#, ruby, python`,
+      `sql`,
+      `French and English`
     ]
-  },
-  education: {
-    title: "Education",
-    content: [
-      {date: '2007-2011', title: 'John Molson School of Business, Concordia University, Montreal, Quebec', desc: 'Bachelor of Commerce, Major in Accountancy'
-      },
-      {date: '2004-2006', title: 'Collège International Marie de France', desc: 'French Baccalaureate in economics, specialization in mathematics (DEC Equivalent)'
-      }
+  } ,
+  "education":  {
+    "title":  `Education`,
+    "content":  [
+      {
+        "date":  `2007-2011`,
+        "title":  `John Molson School of Business, Concordia University, Montreal, Quebec`,
+        "desc":  `Bachelor of Commerce, Major in Accountancy`
+      } ,
+      {
+        "date":  `2004-2006`,
+        "title":  `Collège International Marie de France`,
+        "desc":  `French Baccalaureate in economics, specialization in mathematics (DEC Equivalent)`
+      } 
     ]
-  },
-  profExp: {
-    title: "Professional Experience",
-    content: [
-      {date: '2014-2015', title: 'Ubisoft - IT-Dev Services', desc: `
+  } ,
+  "profExp":  {
+    "title":  `Professional Experience`,
+    "content":  [
+      {
+        "date":  `2014-2015`,
+        "title":  `Ubisoft - IT-Dev Services`,
+        "desc":  `
 Programer Analyst
 - As part of IT-Dev, develop and maintain internal applications for the various internal services (hr/logistics/fincances/etc).
 - Analyse and understand internal customers business requirements
 - Work alongside other anylsts to design, code and test modiifcations to internal software
-      `},
-      {date: '2011-2014', 
-       title: 'Ubisoft - Projects Cost Control', 
-       desc: `
+      `
+      } ,
+      {
+        "date":  `2011-2014`,
+        "title":  `Ubisoft - Projects Cost Control`,
+        "desc":  `
 Financial Analyst
 - Design, implement and maintain:
   - Reports and finaacial planning tools used by the projects to prepare and follow their budgets.
@@ -72,31 +311,28 @@ Financial Analyst
   - Prepare reports on the state of the budgets. 
 - Ensure proper financial information is shared between the projects productions team, local management and the headoffice.
 - Calculate the yearly SRED credits for the projects.
-       `},
-      {date: '2006-2009', 
-       title: 'Caisse Centrale Desjardins - Credit and integrated risk management sector' , 
-       desc: 
-`Internship
+       `
+      } ,
+      {
+        "date":  `2006-2009`,
+        "title":  `Caisse Centrale Desjardins - Credit and integrated risk management sector`,
+        "desc":  `Internship
   - Testing new reports being developed
   - Preparing daily, monthly and quarterly reports
   - Performing quarterly reconciliations at month and quarter end. 
   - Automating some reports and jobs through excel templates and VBA
   - Performed some translation from French to English
-  - Various other jobs to alleviate work load for the department and to perform essential services during other employee’s vacations.` 
-}]
-},
-};
-
-window['data-settings'] = {
-  dataset: 'data', 
-  reactr:{
-    editor: 'DataEdit'
-  }
-};
-
-window['components-settings'] = {
-  dataset: 'components',
-  functions: `function() {
+  - Various other jobs to alleviate work load for the department and to perform essential services during other employee’s vacations.`
+      } 
+    ]
+  } 
+} ;
+</script>
+<script id="components-settings" type="text/babel">
+window['components-settings'] = 
+{
+  "dataset":  `components`,
+  "functions":  `function() {
     var self = {};
     self.registerComponent =  function(component, name){
       var presets = { presets: ['es2015', 'react'] };
@@ -111,17 +347,19 @@ window['components-settings'] = {
     };
 
     return self;
-  }`, 
-  hooks: {
-    'onInit': 'registerComponents',
-  },
-  reactr:{
-    editor: 'ComponentEditor',
-  }
-};
-
-window['components'] = {
-  ReactrRoot: `{
+  }`,
+  "hooks":  {
+    "onInit":  `registerComponents`
+  } ,
+  "reactr":  {
+    "editor":  `ComponentEditor`
+  } 
+} ;
+</script>
+<script id="components" type="text/babel">
+window['components'] = 
+{
+  "ReactrRoot":  `{
     init: function(){
       let self = this;
       let {datasets} = this.props;
@@ -161,7 +399,7 @@ window['components'] = {
         <div className="cf">
 
           <div className="fl w-50">
-            <CV data={self.state.data} />
+            <Output data={self.state.data} q={self.state.funcs.data} />
           </div>
 
           <div className="fl w-50 pa3">
@@ -175,7 +413,15 @@ window['components'] = {
       )
     }
   }`,
-  Scratch: `{
+  "Output":  `{
+    render: function(){
+      let {data, q} = this.props;
+      return (
+        <CV data={data} />
+      )
+    }
+  }`,
+  "Scratch":  `{
     render: function(){
       return (
         <div>
@@ -192,7 +438,7 @@ window['components'] = {
       )
     }
   }`,
-  ToggleMenu: `{
+  "ToggleMenu":  `{
     toggleVisibility: function(){
       var visible = this.state.visible;
 
@@ -220,7 +466,7 @@ window['components'] = {
       return (
         <div className="">
           <a onClick={this.toggleVisibility}> 
-            \u270E
+            ✎
           </a>
           <div className={cn(cnames, 'z-1')}on>
             {this.props.children}
@@ -229,7 +475,7 @@ window['components'] = {
       )
     }
   }`,
-  RawEdit: `{
+  "RawEdit":  `{
     save: function(){
       let evaledCode;
       this.props.q.updateValue([], this.editor.getValue());
@@ -268,7 +514,7 @@ window['components'] = {
 
     }
   }`,
-  ComponentEditor: `{
+  "ComponentEditor":  `{
     updateCurrentComponent: function(){
       let {selected, buffer} = this.state;
       let val = this.editor.getValue();
@@ -350,7 +596,7 @@ window['components'] = {
       )
     },
   }`,
-  ComponentEditorFileControls: `{
+  "ComponentEditorFileControls":  `{
     onApply: function(){
       this.props.updateComponent();
     },
@@ -389,7 +635,7 @@ window['components'] = {
       )
     },
   }`,
-  ComponentList: `{
+  "ComponentList":  `{
     onClick: function(key, evnt){
       evnt.preventDefault();
       this.props.onClick(key);
@@ -403,7 +649,7 @@ window['components'] = {
       let {components, buffer} = self.props;
 
       var compList = _.map(components, function(comp, key){
-        let modIndic = _.has(buffer, key) ? '\u2022' : "";
+        let modIndic = _.has(buffer, key) ? '•' : "";
         let cNames = cn(
           "ph3 pv3 bb b--light-silver",
           (key == self.props.selected) ? 'b' : ''
@@ -424,7 +670,7 @@ window['components'] = {
       );
     }
   }`,
-  TextInputButton: `{
+  "TextInputButton":  `{
     onChange: function(evnt){
       this.setState({value: evnt.target.value})
     },
@@ -449,7 +695,7 @@ window['components'] = {
       )
     }
   }`,
-  ReactrControls: `{
+  "ReactrControls":  `{
     onSave: function(e){
       this.props.ctrls.saveToFile();
     },
@@ -476,7 +722,7 @@ window['components'] = {
       )
     }
   }`,
-  Tabs: `{
+  "Tabs":  `{
     getInitialState: function(){
       return {
         selected: this.props.selected || 0
@@ -515,7 +761,7 @@ window['components'] = {
       )
     }
   }`,
-  DataEdit: `{
+  "DataEdit":  `{
     render: function(){
       var self = this;
       let {data, q, path} = self.props;
@@ -529,7 +775,7 @@ window['components'] = {
       )
     }
   }`,
-  ObjectEditor: `{
+  "ObjectEditor":  `{
     modKey: function(path, newVal, evnt){
       this.props.q.modKey(path, newVal);
       return newVal
@@ -618,7 +864,7 @@ window['components'] = {
       );
     },
   }`,
-  TextInput: `{
+  "TextInput":  `{
     onChange: function(e){
       this.setState({val: e.target.value});
       if(e.target.value === this.props.data){
@@ -656,7 +902,7 @@ window['components'] = {
       if (this.state.mod && !(this.state.val === "")) {
         saveCtrls = (
           <a className="fl" onClick={this.onSave}>
-            \u2713
+            ✓
           </a>
         )
       };
@@ -700,7 +946,7 @@ window['components'] = {
       )
     },
   }`,
-  ArrayEditor: `{
+  "ArrayEditor":  `{
     addArray: function(path, evnt){
       this.props.q.addArray(path);
     },
@@ -841,7 +1087,7 @@ window['components'] = {
 
     },
   }`,
-  ValueEditor:  `{
+  "ValueEditor":  `{
     onChange: function(e){
       this.setState({val: e.target.value})
       this.props.q.updateValue(this.props.path, e.target.value)
@@ -865,7 +1111,7 @@ window['components'] = {
       )
     }
   }`,
-  Dropdown: `{
+  "Dropdown":  `{
     onChange: function(e){
       this.setState({value: e.target.value});
       this.props.onChange(e.target.value);
@@ -889,7 +1135,7 @@ window['components'] = {
       )
     },
   }`,
-  CV: `{
+  "CV":  `{
     render: function(){
       let {data} = this.props;
       let mdConverter = new showdown.Converter();
@@ -913,7 +1159,7 @@ window['components'] = {
       )
     },
   }`,
-  CVHeader: `{
+  "CVHeader":  `{
     render: function() {
       let {name} = this.props;
       return (
@@ -923,7 +1169,7 @@ window['components'] = {
       );
     }
   }`,
-  ContactList: `{
+  "ContactList":  `{
     render: function(){  
       
       let contact = _(this.props.contactInfo)
@@ -937,7 +1183,7 @@ window['components'] = {
       )
     }
   }`,
-  ContactBox: `{
+  "ContactBox":  `{
     render: function() {
       let {contactInfo} = this.props;
 
@@ -961,7 +1207,7 @@ window['components'] = {
 
     }
   }`,
-  CVSection: `{
+  "CVSection":  `{
     render: function(){
       return (
         <div className="fl mb5 w-100">
@@ -982,7 +1228,7 @@ window['components'] = {
       )
     }
   }`,
-  VList: `{
+  "VList":  `{
     render: function(){
       let listElems = _.map(this.props.elems, function(elem, i){
         return <li key={i} className="mb2">{elem}</li>
@@ -994,7 +1240,7 @@ window['components'] = {
       )
     }
   }`,
-  ChronoList: `{
+  "ChronoList":  `{
     render: function(){
       let self = this;
       let {elems, mdConverter} = this.props;
@@ -1021,7 +1267,7 @@ window['components'] = {
       )
     }
   }`,
-  MDBlock:  `{
+  "MDBlock":  `{
     render: function(){
       let self = this;
       let {data, mdConverter} = this.props;
@@ -1032,46 +1278,208 @@ window['components'] = {
         <div dangerouslySetInnerHTML={ {__html: rendered}}></div>
       )
     }
-  }`, 
-};
-
-window['config'] = {
-  elem:         'root',
-  docRoot:      'CV',
-  title:        'reactr',
-  stylesheets:  ["css/tachyons.min.css",  
-                 "css/style.css", 
-                ],
-  scriptsLocal: [ "libs/jquery.js",
-                  "libs/lodash.js",
-                  "libs/react.js",
-                  "libs/react-dom.js",
-                  "libs/react-dom-server.min.js",
-                  "libs/babel.min.js",
-                  "libs/polyfill.min.js",
-                  "libs/browser.min.js",
-                  "libs/ace.js",
-                  "libs/showdown.min.js",
-                ],
-  scripts:      [ "https://cdn.jsdelivr.net/jquery/3.1.0/jquery.min.js",
-                  "https://cdn.jsdelivr.net/lodash/4.13.1/lodash.min.js",
-                  "https://cdn.jsdelivr.net/react/15.2.1/react.min.js",
-                  "https://cdn.jsdelivr.net/react/15.2.1/react-dom.min.js",
-                  "https://cdn.jsdelivr.net/react/15.2.1/react-dom-server.min.js",
-                  "https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.10.3/babel.min.js",
-                  "https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.9.1/polyfill.min.js",
-                  "https://cdn.jsdelivr.net/babel/6.0.16/browser.min.js",
-                  "https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js",
-                  "https://cdn.jsdelivr.net/showdown/1.4.2/showdown.min.js",
-                ],
-  datasets:     ['data', 
-                 'components',
-                 ],
-};
-
+  }`
+} ;
 </script>
+<script id="app-css-settings" type="text/babel">
+window['app-css-settings'] = 
+{
+  "dataset":  `app-css`,
+  "functions":  `function() {
+      var self = {};
+
+      self.applyCSS = function(data){
+        $("#app-css").html(data);
+        return data;
+      };
+
+      return self;
+    }`,
+  "hooks":  {
+    "postUpdate":  `applyCSS`
+  } ,
+  "reactr":  {
+    "editor":  `RawEdit`,
+    "saveData":  `function saveData(ds) {
+      return saveCSSDS(ds);
+    }`
+  } 
+} ;
+</script>
+<script type="text/babel">
+window['app-css'] = 
+`
+  .btn,
+  .btn:link,
+  .btn:visited {
+    border-style: solid;
+    border-width: 1px;
+    color: #111;
+    display: inline-block;
+    letter-spacing: .15em;
+    margin-bottom: .5em;
+    padding: 0.25em 1em;
+    text-decoration: none;
+    -webkit-transition: color .4s, background-color .4s, border .4s;
+            transition: color .4s, background-color .4s, border .4s;
+  }
+
+  .btn:hover {
+    color: #000;
+    border: 1px solid #000;
+    -webkit-transition: background-color .3s, color .3s, border .3s;
+            transition: background-color .3s, color .3s, border .3s;
+  }
+
+  .btn:active {
+    color: #000;
+    border: 1px solid #000;
+    -webkit-transition: background-color .3s, color .3s, border .3s;
+            transition: background-color .3s, color .3s, border .3s;
+  }
 
 
+  .inpt{
+    margin:3px;
+    border:0;
+    padding:2px;
+    display:inline-block;
+    vertical-align:middle;
+    white-space:normal;
+    background:none;
+    line-height:1;
+    border-bottom: 1px solid #aaa;
+    font-family:Arial;
+  }
+
+  .inpt:focus {
+    outline:0;
+    border-bottom: 1px solid #555;
+  }
+
+  .static { position: static; }
+  .relative { position: relative; }
+  .absolute { position: absolute; }
+  .fixed { position: fixed; }
+  @media screen and (min-width: 48em) {
+   .static-ns { position: static; }
+   .relative-ns { position: relative; }
+   .absolute-ns { position: absolute; }
+   .fixed-ns { position: fixed; }
+  }
+  @media screen and (min-width: 48em) and (max-width: 64em) {
+   .static-m { position: static; }
+   .relative-m { position: relative; }
+   .absolute-m { position: absolute; }
+   .fixed-m { position: fixed; }
+  }
+  @media screen and (min-width: 64em) {
+   .static-l { position: static; }
+   .relative-l { position: relative; }
+   .absolute-l { position: absolute; }
+   .fixed-l { position: fixed; }
+  }
+
+  .f7 {
+    font-size: .75rem;
+  }
+
+  .f8 {
+    font-size: .70rem;
+  }
+
+
+  .no-display {
+    display: none;
+  }
+
+
+
+  .menu{
+    text-align: left;
+    display: inline;
+    margin: 0;
+    padding: 15px 4px 17px 0;
+    list-style: none;
+    -webkit-box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+    -moz-box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+    font: bold 12px/18px sans-serif;
+    display: inline-block;
+    margin-right: -4px;
+    position: relative;
+    padding: 15px 20px;
+    background: #fff;
+    cursor: pointer;
+    -webkit-transition: all 0.2s;
+    -moz-transition: all 0.2s;
+    -ms-transition: all 0.2s;
+    -o-transition: all 0.2s;
+    transition: all 0.2s;
+  }
+
+  .menu:hover {
+    background: #555;
+    color: #fff;
+  }
+
+  .menu ul {
+      padding: 0;
+    position: absolute;
+
+    left: 0;
+    width: 150px;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+    -webkit-transiton: opacity 0.2s;
+    -moz-transition: opacity 0.2s;
+    -ms-transition: opacity 0.2s;
+    -o-transition: opacity 0.2s;
+    -transition: opacity 0.2s;
+    
+  }
+  .menu ul li { 
+    background: #555; 
+    display: block; 
+    color: #fff;
+    text-shadow: 0 -1px 0 #000;
+  }
+  .menu ul li:hover { background: #666; }
+  .menu:hover ul {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .hlayer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.2);
+  }
+
+
+  /* https://github.com/tachyons-css/tachyons-z-index */
+  .z-0 { z-index: 0; }
+  .z-1 { z-index: 1; }
+  .z-2 { z-index: 2; }
+  .z-3 { z-index: 3; }
+  .z-4 { z-index: 4; }
+  .z-5 { z-index: 5; }
+  .z-999 { z-index: 999; }
+  .z-9999 { z-index: 9999; }
+  .z-max { z-index: 2147483647; }
+  .z-inherit { z-index: inherit; }
+  .z-initial { z-index: initial; }
+  .z-unset { z-index: unset; }
+`;
+</script>
 <script id="reactr" type="text/babel">
   var evalES6 = function(code){
     var evaled;
@@ -1079,6 +1487,15 @@ window['config'] = {
                          {presets: ['es2015', 'react']}).code);
     return evaled;
   };
+
+  var saveCSSDS = function(ds){
+      let content = "window['" + ds.q.getSettings().dataset + "'] = \n" + wrapTemplate(pPrint(ds.q.getData()))  + ";";
+
+      return {
+        css: ["<style type='text/css' id='" + ds.q.getSettings().dataset + "'>" + pPrint(ds.q.getData()) + "</style>"], 
+        body: ['<script type="text/babel">\n' + content + "\n" + "</" + "script>"]
+      }
+    }
 
   var cn = function(){
     return _.chain(arguments)
@@ -1137,6 +1554,10 @@ window['config'] = {
 
     return _.isString(c) ? c : toTypeString[getType(c)](c, 0);
   };
+
+  var wrapTemplate = function(v){
+    return `\`${v}\``
+  }
 
 
   var Container = function(settings){
@@ -1322,7 +1743,11 @@ window['config'] = {
 
     var saveDataset = function(ds){
       let tmpSettings = _.merge({}, defaultSettings, settings);
-      return tmpSettings.reactr.saveData(ds); 
+      let save = _.isString(tmpSettings.reactr.saveData)
+                  ? evalES6(tmpSettings.reactr.saveData)
+                  : tmpSettings.reactr.saveData
+
+      return save(ds); 
     }
    
   
@@ -1481,12 +1906,12 @@ window['config'] = {
         if(_.has(v, "scripts"))  scripts = scripts.concat(v["scripts"])
       })
 
-      body = _.reduce(body, (x, y) => `${x}\n${y}`)
-      css = _.reduce(css, (x, y) => `${x}\n${y}`)
+      body =    _.reduce(body, (x, y) => `${x}\n${y}`)
+      css =     _.reduce(css, (x, y) => `${x}\n${y}`)
       scripts = _.reduce(scripts, (x, y) => `${x}\n${y}`)
       
       let head = `<title>${title}</title>\n${meta}\n${css}\n${scripts}`
-      let bodyContent = `<div id="root"></div>\n${body}\n$`
+      let bodyContent = `<div id="root"></div>\n${body}\n`
 
       let fileContent = `<!DOCTYPE html>\n<html>\n<head>\n${head}\n</head>\n<body>\n${bodyContent}\n</body>\n<\html>`
 
@@ -1556,6 +1981,10 @@ window['config'] = {
 
     var init = function(){
       config = window["config"];
+
+      datasets['config'] = Container( _.merge({}, evaledContainerSettings, configContainerSettings))
+
+      
       _(config.datasets)
         .forEach(function(ds){
           let settingsName = `${ds}-settings`
@@ -1568,8 +1997,8 @@ window['config'] = {
           }
         });
 
-      datasets['config'] = Container( _.merge({}, evaledContainerSettings, configContainerSettings))
       datasets['reactr'] = Container(reactrCodeContainerSettings);
+
     };
 
     init();
@@ -1599,7 +2028,5 @@ window['config'] = {
   reactr.run();
 </script>
 
-
-
-
-</body></html>
+</body>
+<html>
