@@ -1,6 +1,6 @@
-# reactr
+# radiatr
 
-Reactr (reactor) (change the name? too cliche?) is a to make a self editable, portable documents. All that's needed is a  browser. 
+ is a to make a self editable, portable documents. All that's needed is a  browser. 
 Also gives a quick way to prototype views with a quick work cylce - easely setup mock data, create your components, no need to use a different editor, reload the browser at every change, or setup a sever.
 
 # Why?
@@ -26,19 +26,14 @@ Download the html. Start editing. Save changes.
 ## Todo
 
 - Clean up styles
-  - fix data editor - options//save
-  - setup options list
   - dragable splitters
 
 - Data Editor
-  - Delete Array
-  - Reorder Array
   - show pros pencil on hover/focus
   - value editor -- if long text change to textarea
   - array list - bg number too big when single line - 
-  - array editor - per entry props/editor
-  - array editor - for single line bg number a bit much
-  - add kb shortucts 
+  - add kb shortucts -- enter for save
+  
 
 
 - Component Editor
@@ -60,6 +55,10 @@ Download the html. Start editing. Save changes.
     - everything isa container
     - components and setigns are special cases
       - laod a seting container for these containers first for spec methods etc (ie type f editro for component/how to register components etc..)
+  - get data to function
+  - save to fucntion
+  - view in settings
+  - container setting editor 
 
 - Find a way to have meta/props
   - shadow container - tied to the path if existing?
@@ -79,4 +78,11 @@ Download the html. Start editing. Save changes.
 - Dependencies 
   - For dev purposes the dependencies are local - save on reload time etc...
   - Change to be able to get forma CDN, inline them on export or downlad them for dev
+
+
+## Bugs
+  
+  - change how tabs work - creates/destroys content - wip gets lost
+  - changing doc root doesnt really refresh, needs reload.
+
 

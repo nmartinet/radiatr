@@ -39,14 +39,10 @@
   background:none;
   line-height:1;
   border-bottom: 1px solid #aaa;
-  
-  /* Browsers have different default form fonts */
   font-family:Arial;
 }
 
-/* Remove the stupid outer glow in Webkit */
-.inpt:focus
-{
+.inpt:focus {
   outline:0;
   border-bottom: 1px solid #555;
 }
