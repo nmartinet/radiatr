@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>reactr</title>
+<title>radiatr</title>
 <meta charset="utf-8" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tachyons/4.0.2/tachyons.min.css">
 <style type='text/css' id='app-css'>
@@ -193,7 +193,7 @@ window['config'] =
 {
   "elem":  `root`,
   "docRoot":  `CV`,
-  "title":  `reactr`,
+  "title":  `radiatr`,
   "stylesheets":  [
     `https://cdnjs.cloudflare.com/ajax/libs/tachyons/4.0.2/tachyons.min.css`
   ],
@@ -232,7 +232,7 @@ window['config'] =
 window['data-settings'] = 
 {
   "dataset":  `data`,
-  "reactr":  {
+  "radiatr":  {
     "editor":  `DataEdit`
   } 
 } ;
@@ -240,92 +240,6 @@ window['data-settings'] =
 <script id="data" type="text/babel">
 window['data'] = 
 {
-  "name":  `Nicolas Martinet`,
-  "contact":  [
-    {
-      "name":  `email`,
-      "val":  `nicolas.martinet@gmail.com`
-    } ,
-    {
-      "name":  `telephone`,
-      "val":  `123-456-7890`
-    } ,
-    {
-      "name":  `website`,
-      "val":  `nmartinet.github.io`
-    } 
-  ],
-  "skills":  {
-    "title":  `Skills`,
-    "content":  [
-      `excel, vba`,
-      `html, js, css`,
-      `c#, ruby, python`,
-      `sql`,
-      `French and English`
-    ]
-  } ,
-  "education":  {
-    "title":  `Education`,
-    "content":  [
-      {
-        "date":  `2007-2011`,
-        "title":  `John Molson School of Business, Concordia University, Montreal, Quebec`,
-        "desc":  `Bachelor of Commerce, Major in Accountancy`
-      } ,
-      {
-        "date":  `2004-2006`,
-        "title":  `Collège International Marie de France`,
-        "desc":  `French Baccalaureate in economics, specialization in mathematics (DEC Equivalent)`
-      } 
-    ]
-  } ,
-  "profExp":  {
-    "title":  `Professional Experience`,
-    "content":  [
-      {
-        "date":  `2014-2015`,
-        "title":  `Ubisoft - IT-Dev Services`,
-        "desc":  `
-Programer Analyst
-- As part of IT-Dev, develop and maintain internal applications for the various internal services (hr/logistics/fincances/etc).
-- Analyse and understand internal customers business requirements
-- Work alongside other anylsts to design, code and test modiifcations to internal software
-      `
-      } ,
-      {
-        "date":  `2011-2014`,
-        "title":  `Ubisoft - Projects Cost Control`,
-        "desc":  `
-Financial Analyst
-- Design, implement and maintain:
-  - Reports and finaacial planning tools used by the projects to prepare and follow their budgets.
-  - Local datawarehouses to better answer local needs. Improved responsiveness and quality of available data
-  - Toolchain used by the analyst team to setup, update, maintain and analyse budgets.
-- Follow and controt budgets of multiple game projects
-  - Act as support and main point of contact for the projects producer
-  - Setup initial bugets with the producer
-  - Analyse and maintain budgets and forecasts
-- Follow and analyse budgets for the headoffice.
-  - Analyse and control costs for the headoffice
-  - Prepare reports on the state of the budgets. 
-- Ensure proper financial information is shared between the projects productions team, local management and the headoffice.
-- Calculate the yearly SRED credits for the projects.
-       `
-      } ,
-      {
-        "date":  `2006-2009`,
-        "title":  `Caisse Centrale Desjardins - Credit and integrated risk management sector`,
-        "desc":  `Internship
-  - Testing new reports being developed
-  - Preparing daily, monthly and quarterly reports
-  - Performing quarterly reconciliations at month and quarter end. 
-  - Automating some reports and jobs through excel templates and VBA
-  - Performed some translation from French to English
-  - Various other jobs to alleviate work load for the department and to perform essential services during other employee’s vacations.`
-      } 
-    ]
-  } 
 } ;
 </script>
 <script id="components-settings" type="text/babel">
@@ -351,7 +265,7 @@ window['components-settings'] =
   "hooks":  {
     "onInit":  `registerComponents`
   } ,
-  "reactr":  {
+  "radiatr":  {
     "editor":  `ComponentEditor`
   } 
 } ;
@@ -359,7 +273,7 @@ window['components-settings'] =
 <script id="components" type="text/babel">
 window['components'] = 
 {
-  "ReactrRoot":  `{
+  "RadiatrRoot":  `{
     init: function(){
       let self = this;
       let {datasets} = this.props;
@@ -402,8 +316,8 @@ window['components'] =
           </div>
 
           <div className="fl w-50 pa3">
-            <h1 className="f1 tracked tr fw1 bb bw1 b--silver fw1">reactr</h1>
-            <ReactrControls data={self.state.data} />
+            <h1 className="f1 tracked tr fw1 bb bw1 b--silver fw1">radiatr</h1>
+            <RadiatrControls data={self.state.data} />
             <Tabs selected="0">
               {dsEditors}
             </Tabs>
@@ -416,24 +330,7 @@ window['components'] =
     render: function(){
       let {data, q} = this.props;
       return (
-        <CV data={data} />
-      )
-    }
-  }`,
-  "Scratch":  `{
-    render: function(){
-      return (
-        <div>
-          scratch
-          <ToggleMenu>
-            <ul>
-              <li>1</li>
-              <li>1</li>
-              <li>1</li>
-              <li>1</li>
-            </ul>
-          </ToggleMenu>
-        </div>
+        <h1>App</h1>
       )
     }
   }`,
@@ -522,7 +419,7 @@ window['components'] =
       this.props.q.updateValue([selected], val);
     },
     newComponent: function(name){
-      this.props.q.addKey([], name, "")
+      this.props.q.addKey([], name, newComponentTemplate(name))
       return "";
     },
     setEditOptions: function(option){
@@ -694,7 +591,7 @@ window['components'] =
       )
     }
   }`,
-  "ReactrControls":  `{
+  "RadiatrControls":  `{
     onSave: function(e){
       saveToFile()
     },
@@ -1297,7 +1194,7 @@ window['app-css-settings'] =
   "hooks":  {
     "postUpdate":  `applyCSS`
   } ,
-  "reactr":  {
+  "radiatr":  {
     "editor":  `RawEdit`,
     "saveData":  `function saveData(ds) {
       return saveCSSDS(ds);
@@ -1479,8 +1376,8 @@ window['app-css'] =
   .z-unset { z-index: unset; }
 `;
 </script>
-<script id="reactr" type="text/babel">
-  var reactr;
+<script id="radiatr" type="text/babel">
+  var radiatr;
   
   var evalES6 = function(code){
     var evaled;
@@ -1496,6 +1393,16 @@ window['app-css'] =
         css: ["<style type='text/css' id='" + ds.q.getSettings().dataset + "'>" + pPrint(ds.q.getData()) + "</style>"], 
         body: ['<script type="text/babel">\n' + content + "\n" + "</" + "script>"]
       }
+  };
+
+  var newComponentTemplate = function(name){
+    return `{
+  render: function(){
+    return (
+      <div>${name}</div>
+    )
+  }
+}`
   };
 
   var promptForSave = function(content){
@@ -1516,7 +1423,7 @@ window['app-css'] =
     let indent= "  ";
     //defaults
     let {
-      title       = 'reactr',
+      title       = 'radiatr',
       meta        = `<meta charset="utf-8" />`,
       datasets    = [], 
     } = content;
@@ -1549,7 +1456,7 @@ window['app-css'] =
   };
 
   var saveToFile = function(){
-    let datasets = reactr.getDatasets()
+    let datasets = radiatr.getDatasets()
     let currConf = datasets['config'].q.getData();
 
     let fileContent = {
@@ -1565,7 +1472,7 @@ window['app-css'] =
   var generateStaticDoc = function(content){
     //defaults
     let {
-      title       = 'reactr',
+      title       = 'radiatr',
       meta        = `<meta charset="utf-8" />`,
       stylesheets = [],
       body        = ""
@@ -1594,7 +1501,7 @@ window['app-css'] =
   }
 
   var saveStaticDoc = function(){
-    let datasets = reactr.getDatasets()
+    let datasets = radiatr.getDatasets()
     let currConf = datasets['config'].q.getData();
     let body = ReactDOMServer.renderToString(
       React.createElement(window[currConf.docRoot], {data: datasets.data.data})
@@ -1694,7 +1601,7 @@ window['app-css'] =
 
     var defaultSettings = {
       dataset: 'data', 
-      reactr:{
+      radiatr:{
         editor: 'RawEdit',
         getData: function(dataset){
           return window[dataset]
@@ -1859,9 +1766,9 @@ window['app-css'] =
 
     var saveDataset = function(ds){
       let tmpSettings = _.merge({}, defaultSettings, settings);
-      let save = _.isString(tmpSettings.reactr.saveData)
-                  ? evalES6(tmpSettings.reactr.saveData)
-                  : tmpSettings.reactr.saveData
+      let save = _.isString(tmpSettings.radiatr.saveData)
+                  ? evalES6(tmpSettings.radiatr.saveData)
+                  : tmpSettings.radiatr.saveData
 
       return save(ds); 
     }
@@ -1877,9 +1784,9 @@ window['app-css'] =
       let tmpSettings = _.cloneDeep(defaultSettings);
       tmpSettings = _.merge(defaultSettings, settings);
 
-      data      = tmpSettings.reactr.getData(settings.dataset);
+      data      = tmpSettings.radiatr.getData(settings.dataset);
       name      = settings.dataset;
-      editor    = settings.reactr.editor;
+      editor    = settings.radiatr.editor;
       if(settings.functions){
         var presets = { presets: ['es2015', 'react'] };
         var compCode = "functions = " + settings.functions + "()";
@@ -1925,15 +1832,15 @@ window['app-css'] =
     }
   };
 
-  var reactrCodeContainerSettings = {
-    dataset: 'reactr',
-    reactr: {
+  var radiatrCodeContainerSettings = {
+    dataset: 'radiatr',
+    radiatr: {
       editor: 'RawEdit',
       getData: function(ds){
-        return $('html').find('#reactr').html();
+        return $('html').find('#radiatr').html();
       },
       saveData: function(ds){
-        return {body: [`<script id="reactr" type="text/babel">` + ds.q.getData() + "</" + "script>"]};
+        return {body: [`<script id="radiatr" type="text/babel">` + ds.q.getData() + "</" + "script>"]};
       },
     }
   };
@@ -1951,14 +1858,14 @@ window['app-css'] =
     hooks: {
       'postUpdate': 'evalUpdate'
     },
-    reactr: {
+    radiatr: {
       editor: 'RawEdit',
     }
   };
 
   var configContainerSettings = {
     'dataset': 'config',
-    reactr: {
+    radiatr: {
       saveData: function(ds){
         let data = ds.q.getData();
         let cssImports = _.map(data.stylesheets, (ss) => `<link rel="stylesheet" href="${ss}">`)
@@ -1977,7 +1884,7 @@ window['app-css'] =
     },
   };
 
-  var Reactr = function(){
+  var Radiatr = function(){
     var self            = this;
     var config;
     var datasets        = {};
@@ -1991,7 +1898,7 @@ window['app-css'] =
       const rootElement = document.getElementById(config.elem)
 
       ReactDOM.render(
-        <ReactrRoot datasets={datasets} />,
+        <RadiatrRoot datasets={datasets} />,
         rootElement
       );
     };
@@ -2014,7 +1921,7 @@ window['app-css'] =
           }
         });
 
-      datasets['reactr'] = Container(reactrCodeContainerSettings);
+      datasets['radiatr'] = Container(radiatrCodeContainerSettings);
     };
 
     init();
@@ -2026,8 +1933,8 @@ window['app-css'] =
 
   }
 
-  reactr = Reactr();
-  reactr.run();
+  radiatr = Radiatr();
+  radiatr.run();
 </script>
 
 </body>

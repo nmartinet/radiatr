@@ -1,6 +1,6 @@
-# reactr
+# radiatr
 
-Reactr (reactor) (change the name? too cliche?) is a to make a self editable, portable documents. All that's needed is a  browser. 
+ is a to make a self editable, portable documents. All that's needed is a  browser. 
 Also gives a quick way to prototype views with a quick work cylce - easely setup mock data, create your components, no need to use a different editor, reload the browser at every change, or setup a sever.
 
 # Why?
